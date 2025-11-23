@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나에게 맞는 다이어리 찾기 | 솔솔</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 14px;
+            font-weight: 300;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #95a5a6 0%, #7f8c8d 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .question-container {
+            margin-bottom: 30px;
+        }
+
+        .question {
+            font-size: 20px;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-weight: 500;
+            line-height: 1.6;
+        }
+
+        .question-number {
+            display: inline-block;
+            background: #95a5a6;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-size: 14px;
+            margin-right: 10px;
+            font-weight: 700;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: white;
+            border: 2px solid #e0e0e0;
+            padding: 18px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            color: #2c3e50;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-weight: 400;
+        }
+
+        .option-btn:hover {
+            border-color: #95a5a6;
+            background: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .option-btn:active {
+            transform: translateY(0);
+        }
+
+        .result-container {
+            display: none;
+        }
+
+        .result-container.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-title {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .result-emoji {
+            font-size: 60px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .result-description {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            line-height: 1.8;
+            color: #2c3e50;
+        }
+
+        .result-description h3 {
+            font-size: 18px;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .result-description ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .result-description li {
+            padding: 8px 0;
+            padding-left: 24px;
+            position: relative;
+        }
+
+        .result-description li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #95a5a6;
+            font-weight: 700;
+        }
+
+        .result-specs {
+            background: white;
+            border: 2px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .result-specs h4 {
+            font-size: 16px;
+            color: #7f8c8d;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .spec-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .spec-item:last-child {
+            border-bottom: none;
+        }
+
+        .spec-label {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .spec-value {
+            color: #2c3e50;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .restart-btn {
+            width: 100%;
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        .restart-btn:hover {
+            background: #7f8c8d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+        }
+
+        .footer p {
+            color: #95a5a6;
+            font-size: 13px;
+            margin-bottom: 8px;
+            font-weight: 300;
+        }
+
+        .youtube-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #95a5a6;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+            font-weight: 400;
+        }
+
+        .youtube-link:hover {
+            color: #2c3e50;
+        }
+
+        .start-container {
+            text-align: center;
+        }
+
+        .start-container h2 {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .start-container p {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            line-height: 1.8;
+            font-weight: 300;
+        }
+
+        .start-btn {
+            width: 100%;
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-weight: 500;
+        }
+
+        .start-btn:hover {
+            background: #7f8c8d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .question {
+                font-size: 18px;
+            }
+
+            .option-btn {
+                padding: 16px 20px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 나에게 맞는 다이어리 찾기</h1>
+            <p>간단한 질문으로 나에게 딱 맞는 기록법을 찾아보세요</p>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <!-- 시작 화면 -->
+        <div id="startScreen" class="start-container">
+            <h2>기록에 매번 실패했나요?</h2>
+            <p>
+                문제는 의지가 아니라 방법입니다.<br>
+                몇 가지 질문으로 당신에게 맞는<br>
+                기록 방법을 찾아드릴게요.
+            </p>
+            <button class="start-btn" onclick="startTest()">시작하기</button>
+        </div>
+
+        <!-- 질문 화면 -->
+        <div id="questionScreen" style="display: none;">
+            <div class="question-container">
+                <div class="question" id="question"></div>
+                <div class="options" id="options"></div>
+            </div>
+        </div>
+
+        <!-- 결과 화면 -->
+        <div id="resultScreen" class="result-container">
+            <div class="result-emoji" id="resultEmoji"></div>
+            <div class="result-title" id="resultTitle"></div>
+            
+            <div class="result-specs" id="resultSpecs"></div>
+            
+            <div class="result-description" id="resultDescription"></div>
+            <button class="restart-btn" onclick="restartTest()">다시 시작하기</button>
+        </div>
+
+        <div class="footer">
+            <p>Created by 솔솔 solsolee</p>
+            <a href="https://www.youtube.com/channel/UCr9-EN8y692CJdYTSSG59uA" target="_blank" class="youtube-link">
+                <span>▶</span> 유튜브 채널 보러가기
+            </a>
+        </div>
+    </div>
+
+    <script>
+        let currentQuestionId = 'screenTime';
+        let questionCount = 0;
+        let answers = {};
+
+        const questionFlow = {
+            screenTime: {
+                question: '하루 종일 화면(컴퓨터, 스마트폰)을 보면 눈이 피로한가요?',
+                options: [
+                    { text: '네, 화면 보는 게 힘들어요', value: 'tired', next: 'location' },
+                    { text: '아니요, 괜찮아요', value: 'ok', next: 'digitalComfort' },
+                    { text: '보통이에요', value: 'normal', next: 'digitalComfort' }
+                ]
+            },
+            digitalComfort: {
+                question: '스마트폰이나 컴퓨터를 켜면 다른 일(SNS, 유튜브)에 빠지기 쉬운가요?',
+                options: [
+                    { text: '네, 집중하기 어려워요', value: 'distracted', next: 'location' },
+                    { text: '아니요, 집중 잘 돼요', value: 'focused', next: 'typingSpeed' }
+                ]
+            },
+            typingSpeed: {
+                question: '타이핑이 손글씨보다 빠르고 편한가요?',
+                options: [
+                    { text: '네, 타이핑이 훨씬 빨라요', value: 'fast', next: 'purpose' },
+                    { text: '손글씨가 더 편해요', value: 'handwriting', next: 'location' }
+                ]
+            },
+            location: {
+                question: '주로 어디에서 시간을 많이 보내시나요?',
+                options: [
+                    { text: '집이나 사무실 책상 앞', value: 'home', next: 'purpose' },
+                    { text: '이동 중이거나 외부 활동이 많음', value: 'mobile', next: 'bagWeight' }
+                ]
+            },
+            bagWeight: {
+                question: '무거운 가방을 들고 다니는 게 괜찮은가요?',
+                options: [
+                    { text: '괜찮아요, 어깨가 튼튼해요', value: 'strong', next: 'purpose' },
+                    { text: '싫어요, 가벼운 게 좋아요', value: 'light', next: 'purpose' }
+                ]
+            },
+            purpose: {
+                question: '기록을 하려는 가장 큰 이유가 뭔가요?',
+                options: [
+                    { text: '할 일을 자주 깜빡해서', value: 'schedule', next: 'timeManagement' },
+                    { text: '감정을 정리하고 싶어서', value: 'diary', next: 'handPain' },
+                    { text: '습관을 만들고 싶어서', value: 'habit', next: 'visualCheck' },
+                    { text: '예쁘게 꾸미고 싶어서', value: 'deco', next: 'decoTime' }
+                ]
+            },
+            timeManagement: {
+                question: '시간 관리가 잘 안 되는 편인가요?',
+                options: [
+                    { text: '네, 시간이 어떻게 가는지 몰라요', value: 'bad', next: 'perfectionism' },
+                    { text: '아니요, 그냥 할 일만 체크하면 돼요', value: 'ok', next: 'perfectionism' }
+                ]
+            },
+            perfectionism: {
+                question: '날짜가 틀리거나 빈 페이지가 있으면 스트레스받나요?',
+                options: [
+                    { text: '네, 완벽하게 채우고 싶어요', value: 'yes', next: 'layoutPreference' },
+                    { text: '아니요, 신경 안 써요', value: 'no', next: 'layoutPreference' }
+                ]
+            },
+            handPain: {
+                question: '손글씨를 오래 쓰면 손가락이나 손목이 아픈가요?',
+                options: [
+                    { text: '네, 금방 아파요', value: 'yes', next: 'longWriting' },
+                    { text: '아니요, 오래 써도 괜찮아요', value: 'no', next: 'perfectionism' }
+                ]
+            },
+            longWriting: {
+                question: '일기를 쓸 때 긴 글을 자주 쓰는 편인가요?',
+                options: [
+                    { text: '네, 하루에 한 페이지 이상 써요', value: 'long', next: 'perfectionism' },
+                    { text: '아니요, 짧게 몇 줄만 써요', value: 'short', next: 'perfectionism' }
+                ]
+            },
+            visualCheck: {
+                question: '눈으로 보면서 체크하는 게 만족감이 있나요?',
+                options: [
+                    { text: '네, 직접 체크하는 게 좋아요', value: 'yes', next: 'multipleHabits' },
+                    { text: '아니요, 알림만 받으면 돼요', value: 'no', next: 'end' }
+                ]
+            },
+            multipleHabits: {
+                question: '추적하고 싶은 습관이 여러 개인가요?',
+                options: [
+                    { text: '네, 5개 이상이에요', value: 'many', next: 'layoutPreference' },
+                    { text: '아니요, 1-2개만 해요', value: 'few', next: 'perfectionism' }
+                ]
+            },
+            layoutPreference: {
+                question: '레이아웃을 직접 그리고 디자인하는 걸 좋아하나요?',
+                options: [
+                    { text: '네, 창의적인 작업이 좋아요', value: 'yes', next: 'decoTime' },
+                    { text: '아니요, 귀찮아요', value: 'no', next: 'end' }
+                ]
+            },
+            decoTime: {
+                question: '매주 30분 이상 다이어리 꾸미기에 시간을 쓸 수 있나요?',
+                options: [
+                    { text: '네, 충분히 시간 낼 수 있어요', value: 'yes', next: 'concentration' },
+                    { text: '아니요, 그럴 시간 없어요', value: 'no', next: 'end' }
+                ]
+            },
+            concentration: {
+                question: '한 가지 작업에 오래 집중할 수 있나요? (ADHD 등)',
+                options: [
+                    { text: '네, 집중력이 좋은 편이에요', value: 'yes', next: 'end' },
+                    { text: '아니요, 산만한 편이에요', value: 'no', next: 'end' }
+                ]
+            },
+            end: {
+                question: '',
+                options: []
+            }
+        };
+
+        function startTest() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('questionScreen').style.display = 'block';
+            showQuestion('screenTime');
+        }
+
+        function showQuestion(questionId) {
+            if (questionId === 'end') {
+                showResult();
+                return;
+            }
+
+            const questionData = questionFlow[questionId];
+            currentQuestionId = questionId;
+            questionCount++;
+            updateProgress();
+
+            const questionEl = document.getElementById('question');
+            const optionsEl = document.getElementById('options');
+
+            questionEl.innerHTML = `<span class="question-number">${questionCount}</span>${questionData.question}`;
+            optionsEl.innerHTML = '';
+
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = option.text;
+                button.onclick = () => selectOption(questionId, option);
+                optionsEl.appendChild(button);
+            });
+        }
+
+        function selectOption(questionId, option) {
+            answers[questionId] = option.value;
+
+            if (option.next) {
+                setTimeout(() => showQuestion(option.next), 300);
+            } else {
+                showResult();
+            }
+        }
+
+        function updateProgress() {
+            const progress = Math.min((questionCount / 10) * 100, 100);
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function analyzeAnswers() {
+            const profile = {
+                media: 'analog',
+                dateType: 'dated',
+                structure: 'free',
+                freedom: 'preset',
+                paper: 'normal',
+                decoUse: 'normal',
+                size: 'b6'
+            };
+
+            // 매체 결정
+            if (answers.screenTime === 'ok' && answers.digitalComfort === 'focused' && answers.typingSpeed === 'fast') {
+                profile.media = 'digital';
+            } else if (answers.screenTime === 'tired' || answers.digitalComfort === 'distracted') {
+                profile.media = 'analog';
+            } else if (answers.typingSpeed === 'fast' && answers.location === 'mobile') {
+                profile.media = 'hybrid';
+            } else if (answers.location === 'mobile' && answers.bagWeight === 'strong') {
+                profile.media = 'hybrid';
+            }
+
+            // 사이즈 결정
+            if (answers.location === 'mobile') {
+                if (answers.bagWeight === 'light') {
+                    profile.size = 'pocket';
+                } else {
+                    profile.size = 'b6';
+                }
+            } else if (answers.purpose === 'deco' || answers.layoutPreference === 'yes') {
+                profile.size = 'a5';
+            } else {
+                profile.size = 'b6';
+            }
+
+            // 날짜 유형 결정
+            if (answers.perfectionism === 'yes') {
+                profile.dateType = 'undated';
+            } else {
+                profile.dateType = 'dated';
+            }
+
+            // 구조 결정
+            if (answers.timeManagement === 'bad') {
+                profile.structure = 'timetracking';
+            } else if (answers.purpose === 'schedule' || answers.purpose === 'habit') {
+                profile.structure = 'todo';
+            } else {
+                profile.structure = 'free';
+            }
+
+            // 자유도 결정
+            if (answers.layoutPreference === 'yes' && answers.decoTime === 'yes' && answers.concentration === 'yes') {
+                profile.freedom = 'bullet';
+            } else {
+                profile.freedom = 'preset';
+            }
+
+            // 용지 결정
+            if (answers.handPain === 'yes' && answers.longWriting === 'long') {
+                profile.paper = 'fountain';
+            } else {
+                profile.paper = 'normal';
+            }
+
+            // 용도 결정
+            if (answers.purpose === 'deco') {
+                profile.decoUse = 'deco';
+            } else {
+                profile.decoUse = 'normal';
+            }
+
+            return profile;
+        }
+
+        function generateResult() {
+            const profile = analyzeAnswers();
+            const result = {
+                emoji: '',
+                title: '',
+                specs: {},
+                description: []
+            };
+
+            // 매체
+            result.specs['매체'] = {
+                'digital': '디지털',
+                'analog': '아날로그',
+                'hybrid': '하이브리드'
+            }[profile.media];
+
+            // 목적
+            result.specs['목적'] = {
+                'schedule': '일정/업무 관리',
+                'diary': '감정/일기',
+                'habit': '습관/목표 추적',
+                'deco': '다꾸/꾸미기'
+            }[answers.purpose];
+
+            // 디지털인 경우
+            if (profile.media === 'digital') {
+                result.emoji = '📱';
+                result.title = '디지털 기록';
+                
+                if (answers.purpose === 'schedule') {
+                    result.description = [
+                        '구글 캘린더, 노션, Todoist 추천',
+                        '알림 기능으로 일정 관리',
+                        '타이핑 속도로 빠른 입력',
+                        '검색과 백업 자동'
+                    ];
+                } else if (answers.purpose === 'diary') {
+                    result.description = [
+                        '블로그, Day One, 노션 추천',
+                        '긴 글 작성에 편리',
+                        '사진/영상 첨부 가능',
+                        '프라이버시 설정 가능'
+                    ];
+                } else if (answers.purpose === 'habit') {
+                    result.description = [
+                        '습관 트래커 앱 추천',
+                        '알림 기능으로 상기',
+                        '통계 자동 제공',
+                        '시각적 피드백'
+                    ];
+                } else if (answers.purpose === 'deco') {
+                    result.description = [
+                        '태블릿 + 굿노트/노타빌리티',
+                        '디지털 스티커 활용',
+                        '무한 수정 가능',
+                        '공간 제약 없음'
+                    ];
+                }
+            } else {
+                // 아날로그/하이브리드인 경우
+                
+                // 날짜 유형
+                result.specs['날짜 유형'] = {
+                    'dated': '날짜 기입형',
+                    'undated': '만년형'
+                }[profile.dateType];
+
+                // 구조
+                result.specs['구조'] = {
+                    'timetracking': '타임트래킹형',
+                    'todo': '투두리스트형',
+                    'free': '자유 형식'
+                }[profile.structure];
+
+                // 자유도
+                result.specs['자유도'] = {
+                    'bullet': '불렛저널 (자유도 높음)',
+                    'preset': '프리셋 다이어리'
+                }[profile.freedom];
+
+                // 용지
+                result.specs['용지'] = {
+                    'fountain': '만년필 가능 용지',
+                    'normal': '일반 용지'
+                }[profile.paper];
+
+                // 용도
+                result.specs['용도'] = {
+                    'deco': '다꾸용 다이어리',
+                    'normal': '일반 다이어리'
+                }[profile.decoUse];
+
+                // 사이즈
+                result.specs['사이즈'] = {
+                    'pocket': '포켓 사이즈',
+                    'b6': 'B6 사이즈',
+                    'a5': 'A5 이상'
+                }[profile.size];
+
+                // 이모지와 타이틀 생성
+                if (profile.media === 'hybrid') {
+                    result.emoji = '📱📓';
+                    result.title = '하이브리드 기록';
+                } else if (profile.freedom === 'bullet') {
+                    result.emoji = '📒';
+                    result.title = '불렛저널';
+                } else if (profile.decoUse === 'deco') {
+                    result.emoji = '🎨';
+                    result.title = '다꾸 다이어리';
+                } else if (profile.paper === 'fountain') {
+                    result.emoji = '🖋️';
+                    result.title = '만년필 노트';
+                } else {
+                    result.emoji = '📔';
+                    result.title = '아날로그 다이어리';
+                }
+
+                // 설명 생성
+                if (profile.media === 'hybrid') {
+                    result.description.push('디지털과 아날로그의 장점을 모두 활용');
+                    result.description.push('이동 중엔 디지털로, 정리는 아날로그로');
+                    result.description.push('중요한 내용은 스캔하여 백업');
+                }
+
+                if (profile.dateType === 'undated') {
+                    result.description.push('날짜 스트레스 없이 자유롭게');
+                    result.description.push('완벽주의자에게 추천');
+                } else {
+                    result.description.push('날짜가 미리 인쇄되어 편리');
+                }
+
+                if (profile.structure === 'timetracking') {
+                    result.description.push('시간 단위로 세밀한 관리');
+                    result.description.push('24시간 타임라인으로 시간 파악');
+                } else if (profile.structure === 'todo') {
+                    result.description.push('투두리스트로 간편한 관리');
+                    result.description.push('체크박스로 성취감');
+                }
+
+                if (profile.freedom === 'bullet') {
+                    result.description.push('완전한 자유도로 창의적 표현');
+                    result.description.push('모눈 노트 추천');
+                    result.description.push('시간과 집중력 필요');
+                } else {
+                    result.description.push('미리 만들어진 레이아웃으로 편리');
+                    result.description.push('시간 절약');
+                }
+
+                if (profile.paper === 'fountain') {
+                    result.description.push('두꺼운 고급 용지 사용');
+                    result.description.push('만년필로 손 피로 최소화');
+                } else {
+                    result.description.push('일반 볼펜/샤프 사용 가능');
+                }
+
+                if (profile.decoUse === 'deco') {
+                    result.description.push('스티커, 마스킹테이프 활용');
+                    result.description.push('시각적 만족감 극대화');
+                }
+
+                if (profile.size === 'pocket') {
+                    result.description.push('작고 가벼워 휴대성 최고');
+                } else if (profile.size === 'b6') {
+                    result.description.push('적당한 크기로 활용도 높음');
+                } else if (profile.size === 'a5') {
+                    result.description.push('넉넉한 공간으로 자유로운 표현');
+                }
+            }
+
+            return result;
+        }
+
+        function showResult() {
+            const result = generateResult();
+            
+            document.getElementById('questionScreen').style.display = 'none';
+            document.getElementById('resultScreen').classList.add('active');
+            
+            document.getElementById('resultEmoji').textContent = result.emoji;
+            document.getElementById('resultTitle').textContent = result.title;
+            
+            // 스펙 표시
+            const specsEl = document.getElementById('resultSpecs');
+            specsEl.innerHTML = '<h4>📋 당신의 다이어리 스펙</h4>';
+            for (let [key, value] of Object.entries(result.specs)) {
+                specsEl.innerHTML += `
+                    <div class="spec-item">
+                        <span class="spec-label">${key}</span>
+                        <span class="spec-value">${value}</span>
+                    </div>
+                `;
+            }
+            
+            // 설명 표시
+            const descEl = document.getElementById('resultDescription');
+            descEl.innerHTML = '<h3>추천 이유</h3><ul>';
+            result.description.forEach(desc => {
+                descEl.innerHTML += `<li>${desc}</li>`;
+            });
+            descEl.innerHTML += '</ul>';
+            
+            document.getElementById('progressFill').style.width = '100%';
+        }
+
+        function restartTest() {
+            currentQuestionId = 'screenTime';
+            questionCount = 0;
+            answers = {};
+            
+            document.getElementById('resultScreen').classList.remove('active');
+            document.getElementById('startScreen').style.display = 'block';
+            document.getElementById('progressFill').style.width = '0%';
+        }
+    </script>
+</body>
+</html>
