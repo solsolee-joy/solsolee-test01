@@ -1263,7 +1263,7 @@ const PIX = { home: 'leaf', ledger: 'bellbag', calendar: 'calendar', can: 'can',
   umbrella: 'umbrella', radio: 'radio', clip: 'clip', house: 'house', sprout: 'leaf' };
 const icon = (name, cls = '') => PIX[name] ? `<img class="ico pix ${cls}" src="img/acnh/${PIX[name]}.webp" alt="" draggable="false">` : `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${IC[name] || IC.star}</svg>`;
 const ENV_IC = { '식비': 'bowl', '교통': 'tram', '생활·주거': 'plant', '건강·의료': 'pill', '여가·모임': 'teacup', '쇼핑·자기계발': 'bag', '고정비': 'receipt', '부채상환': 'coins', '비상금': 'jar', '기타': 'star' };
-const DOC_IC = { '집·이사': 'house', '금융': 'coin', '보험': 'umbrella', '가전·보증서': 'radio', '건강': 'pill', '기타': 'clip' };
+const DOC_IC = { '집·이사': 'house', '금융': 'coin', '보험': 'umbrella', '가전·보증서': 'radio', '건강': 'pill', '레시피': 'bowl', '살림팁': 'sprout', '기타': 'clip' };
 
 const ICONS = {
   chev: '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
@@ -2888,8 +2888,8 @@ $('#rec-delete').addEventListener('click', async () => {
 
 // 자료 ---------------------------------------------------------------
 
-const DOC_CATS = ['집·이사', '금융', '보험', '가전·보증서', '건강', '기타'];
-const DOC_COLORS = { '집·이사': '#5f7a45', '금융': '#4f78a6', '보험': '#7c5c9a', '가전·보증서': '#c46a3c', '건강': '#a24a5c', '기타': '#a39582' };
+const DOC_CATS = ['집·이사', '금융', '보험', '가전·보증서', '건강', '레시피', '살림팁', '기타'];
+const DOC_COLORS = { '집·이사': '#5f7a45', '금융': '#4f78a6', '보험': '#7c5c9a', '가전·보증서': '#c46a3c', '건강': '#a24a5c', '레시피': '#b8742a', '살림팁': '#3f7f74', '기타': '#a39582' };
 const fileSize = n => n >= 1048576 ? (n / 1048576).toFixed(1) + 'MB' : Math.max(1, Math.round(n / 1024)) + 'KB';
 const fileExt = name => (name.match(/\.([a-z0-9]{1,8})$/i)?.[1] || '').toLowerCase();
 
