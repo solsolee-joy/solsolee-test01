@@ -306,7 +306,8 @@ dialog::backdrop { background: var(--scrim); }
 .cal .day[aria-pressed="true"] { background: var(--fill); }
 .cal .dots { display: flex; gap: 3px; height: 6px; }
 .cal .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
-.legend { display: flex; gap: 14px; justify-content: center; font-size: 13px; color: var(--muted); margin-top: 12px; }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; justify-content: center; font-size: 13px; color: var(--muted); margin-top: 12px; }
+.legend > span { white-space: nowrap; }
 .legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 5px; vertical-align: 1px; }
 .time { font-size: 13px; font-weight: 600; color: var(--text-2); width: 44px; flex-shrink: 0; text-align: center; }
 .who-bar { width: 4px; align-self: stretch; border-radius: 4px; background: var(--c); flex-shrink: 0; }
@@ -446,6 +447,14 @@ dialog::backdrop { background: var(--scrim); }
 .doc-body { font-size: 16px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; color: var(--text); }
 .doc-body a { color: var(--accent); }
 .doc-body.empty-body { color: var(--muted); }
+
+/* 돈 일정 (약속과 구분) */
+.cal .dots i.money { border-radius: 2px; background: var(--muted); }
+.cal .chips em.money { color: var(--text-2); background: none; box-shadow: inset 0 0 0 1px var(--fill-strong); }
+.legend .money-key::before { border-radius: 2px; background: var(--muted); }
+.legend button.chip { padding: 4px 10px; font-size: 12px; margin-left: 4px; background: var(--fill); }
+.legend button.chip[aria-pressed="true"] { background: var(--text); color: var(--surface); }
+.money-row .avatar { --c: var(--muted); border-radius: 12px; }
 
 /* 나갈 돈 */
 .up-group { font-size: 13px; color: var(--muted); font-weight: 500; display: flex; justify-content: space-between; padding: 10px 0 2px; }
@@ -957,6 +966,7 @@ const state = {
   monthly: [],
   paydayDay: 25,
   showAllEnv: false,
+  showMoney: (() => { try { return localStorage.getItem('showMoney') !== '0'; } catch { return true; } })(),
   planExtra: 100000,
   editingRec: null,
 };
@@ -1698,6 +1708,29 @@ function eventRow(ev, showDate = false) {
   </button>`;
 }
 
+// 달력에 올릴 돈 일정: 월급날(그날 나가는 돈 묶음)과 5만원 이상 정기 지출. 일정 테이블이 아니라 정기 지출에서 계산한다
+const MONEY_MIN = 50000;
+function moneyItems(from, to) {
+  const items = [];
+  const flows = outflows(from, to);
+  const [fy, fm] = from.split('-').map(Number), [ty, tm] = to.split('-').map(Number);
+  for (let y = fy, m = fm; y < ty || (y === ty && m <= tm); m === 12 ? (y++, m = 1) : m++) {
+    const p = paydayOf(y, m);
+    if (p < from || p > to) continue;
+    const out = flows.filter(o => o.date === p).reduce((a, o) => a + o.amount, 0);
+    items.push({ date: p, title: '월급날', sub: out ? `대출 상환 등 ${fmt(out)}원 나가요` : '' });
+  }
+  for (const o of flows) {
+    if (o.loans || o.amount < MONEY_MIN || items.some(i => i.date === o.date && i.title === '월급날')) continue;
+    items.push({ date: o.date, title: `${o.name} ${compactWon(o.amount)}원`, sub: [o.envelope, o.estimated ? '추정' : null].filter(Boolean).join(' · ') });
+  }
+  return items.sort((a, b) => a.date.localeCompare(b.date));
+}
+function moneyRow(mi, showDate = false) {
+  return `<div class="row money-row"><span class="avatar">₩</span>
+    <span class="body"><span class="title">${esc(mi.title)}</span><span class="sub">${esc([showDate ? `${mmdd(mi.date)} ${weekday(mi.date)}` : null, mi.sub].filter(Boolean).join(' · '))}</span></span></div>`;
+}
+
 function renderSchedule() {
   const { start } = monthRange(state.month);
   const first = new Date(start + 'T00:00:00');
@@ -1707,6 +1740,8 @@ function renderSchedule() {
   }
   const byDay = {};
   for (const ev of state.events) (byDay[ev.date] ||= []).push(ev);
+  const moneyByDay = {};
+  if (state.showMoney) for (const mi of moneyItems(start, `${state.month}-${pad(days)}`)) (moneyByDay[mi.date] ||= []).push(mi);
   // 월요일부터 시작
   let html = '월화수목금토일'.split('').map((d, i) => `<div class="dow ${i === 5 ? 'sat' : i === 6 ? 'sun' : ''}">${d}</div>`).join('');
   html += '<div class="day out"></div>'.repeat((first.getDay() + 6) % 7);
@@ -1717,21 +1752,25 @@ function renderSchedule() {
     html += `<button class="day ${dow === 6 ? 'sat' : dow === 0 ? 'sun' : ''} ${iso === today() ? 'today' : ''}" type="button"
       data-day="${iso}" aria-pressed="${iso === state.selectedDay}">
       <span class="d num">${d}</span>
-      <span class="dots">${owners.map(o => `<i style="--c:${person(o).color}"></i>`).join('')}</span>
+      <span class="dots">${owners.map(o => `<i style="--c:${person(o).color}"></i>`).join('')}${moneyByDay[iso] ? '<i class="money"></i>' : ''}</span>
       <span class="chips">${(byDay[iso] || []).slice(0, 3).map(ev =>
         `<em style="--c:${person(ev.owner).color}">${ev.start_time ? `<b>${hhmm(ev.start_time)}</b>` : ''}${esc(ev.title)}</em>`).join('')}${
-        (byDay[iso] || []).length > 3 ? `<em class="more">+${byDay[iso].length - 3}</em>` : ''}</span>
+        (byDay[iso] || []).length > 3 ? `<em class="more">+${byDay[iso].length - 3}</em>` : ''}${
+        (moneyByDay[iso] || []).map(mi => `<em class="money">₩ ${esc(mi.title)}</em>`).join('')}</span>
     </button>`;
   }
   $('#cal').innerHTML = html;
-  $('#legend').innerHTML = [...state.members, TOGETHER].map(p => `<span style="--c:${p.color}">${esc(p.display_name)}</span>`).join('');
+  $('#legend').innerHTML = [...state.members, TOGETHER].map(p => `<span style="--c:${p.color}">${esc(p.display_name)}</span>`).join('') +
+    `${state.showMoney ? '<span class="money-key">돈 일정</span>' : ''}<button class="chip" type="button" id="money-toggle" aria-pressed="${state.showMoney}">₩ 돈 일정 ${state.showMoney ? '켜짐' : '꺼짐'}</button>`;
 
   const sel = state.selectedDay;
   $('#day-title').textContent = `${mmdd(sel)} ${weekday(sel)}요일`;
   const list = byDay[sel] || [];
+  const money = moneyByDay[sel] || [];
   $('#day-events').innerHTML =
     (isSat(sel) ? '<div class="sat-note">남편이 쉬는 토요일이에요. 약속을 잡으면 서로 알려 주세요.</div>' : '') +
-    (list.length ? `<div class="rows">${list.map(ev => eventRow(ev)).join('')}</div>` : '<div class="empty">일정이 없어요</div>');
+    (list.length ? `<div class="rows">${list.map(ev => eventRow(ev)).join('')}</div>` : '<div class="empty">약속이 없어요</div>') +
+    (money.length ? `<div class="rows">${money.map(mi => moneyRow(mi)).join('')}</div>` : '');
 
   const sats = [];
   for (let d = 1; d <= days; d++) {
@@ -1749,6 +1788,12 @@ function renderSchedule() {
   }).join('');
 }
 
+$('#legend').addEventListener('click', e => {
+  if (!e.target.closest('#money-toggle')) return;
+  state.showMoney = !state.showMoney;
+  try { localStorage.setItem('showMoney', state.showMoney ? '1' : '0'); } catch { /* 저장 못 해도 이번 화면에선 동작 */ }
+  renderSchedule();
+});
 $('#cal').addEventListener('click', e => {
   const day = e.target.closest('[data-day]')?.dataset.day;
   if (!day) return;
@@ -1909,7 +1954,8 @@ function renderToday() {
   parts.push((state.notices || []).filter(n => n.pinned).map(n => `<button class="row" type="button" data-goto-view="notices">
     <span class="avatar" style="--c:var(--warn)">공</span>
     <span class="body"><span class="title">${esc(n.title)}</span><span class="sub">${esc(n.body || '')}</span></span>${ICONS.chev}</button>`).join(''));
-  parts.push(events.map(ev => eventRow(ev)).join('') || '<div class="row"><span class="body"><span class="sub">오늘 일정은 없어요</span></span></div>');
+  parts.push(events.map(ev => eventRow(ev)).join('') || '<div class="row"><span class="body"><span class="sub">오늘 약속은 없어요</span></span></div>');
+  if (state.debts.length) parts.push(moneyItems(t, t).map(mi => moneyRow(mi)).join(''));
   parts.push(`<button class="row" type="button" data-goto-view="chores">
     <span class="avatar" style="--c:${due.length ? 'var(--accent)' : 'var(--muted)'}">✓</span>
     <span class="body"><span class="title">${due.length ? `집안일 ${due.length}개 남았어요` : '오늘 집안일 끝'}</span>
