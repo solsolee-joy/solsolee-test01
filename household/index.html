@@ -346,6 +346,7 @@ dialog::backdrop { background: var(--scrim); }
 .login form { display: flex; flex-direction: column; gap: 10px; }
 .login input { padding: 16px; border: 0; border-radius: 14px; background: var(--surface); font-size: 17px; }
 .login input:focus { outline: 2px solid var(--accent); }
+.login .login-link { margin-top: 10px; font-size: 15px; text-align: left; }
 .msg { font-size: 14px; color: var(--text-2); min-height: 22px; margin-top: 8px; }
 .msg.error { color: var(--minus); }
 
@@ -700,11 +701,13 @@ body {
 <div id="login" class="wrap hidden">
   <div class="login">
     <h1>two-clocks-home dashboard</h1>
-    <p>등록된 이메일로 로그인 링크를 보내 드려요.</p>
+    <p>등록된 이메일과 비밀번호로 들어와요.</p>
     <form id="login-form">
-      <input id="login-email" type="email" required placeholder="이메일 주소" autocomplete="email">
-      <button class="btn primary" type="submit">로그인 링크 받기</button>
+      <input id="login-email" type="email" required placeholder="이메일 주소" autocomplete="username">
+      <input id="login-password" type="password" required placeholder="비밀번호" autocomplete="current-password">
+      <button class="btn primary" type="submit">로그인</button>
     </form>
+    <button class="btn ghost login-link" id="login-link" type="button">처음이거나 비밀번호를 잊었다면 메일로 로그인 링크 받기</button>
     <div id="login-msg" class="msg"></div>
   </div>
 </div>
@@ -863,6 +866,7 @@ body {
       <div class="block">
         <div class="rows">
           <button class="row more-row" type="button" id="vill-open"><span class="avatar" id="me-face"></span><span class="body"><span class="title">내 프로필 주민 고르기</span><span class="sub" id="me-vill"></span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+          <button class="row more-row" type="button" id="pw-open"><span class="avatar" style="--c:#8a6a4a"><span data-ic="house"></span></span><span class="body"><span class="title">비밀번호</span><span class="sub" id="pw-sub"></span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
           <button class="row" type="button" id="logout"><span class="body"><span class="title" style="color:var(--minus)">로그아웃</span><span class="sub" id="me-email"></span></span></button>
         </div>
       </div>
@@ -1008,6 +1012,21 @@ body {
     <div class="actions"><button class="btn" type="submit">닫기</button></div>
   </form>
 </dialog>
+<dialog id="pw-dialog">
+  <form class="sheet" id="pw-form" method="dialog">
+    <h3 id="pw-dialog-title"></h3>
+    <div class="form">
+      <input id="pw-username" type="email" autocomplete="username" hidden>
+      <label class="full">새 비밀번호<input id="pw-new" type="password" required minlength="8" autocomplete="new-password" placeholder="8자 이상"></label>
+      <label class="full">한 번 더<input id="pw-again" type="password" required minlength="8" autocomplete="new-password"></label>
+    </div>
+    <div id="pw-msg" class="msg error"></div>
+    <div class="actions">
+      <button class="btn" type="button" id="pw-cancel">나중에</button>
+      <button class="btn primary" type="submit">저장</button>
+    </div>
+  </form>
+</dialog>
 <dialog id="memo-dialog">
   <form class="sheet" id="memo-form" method="dialog">
     <h3 id="memo-dialog-title"></h3>
@@ -1098,6 +1117,8 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const SUPABASE_URL = 'https://twrcgrflwvwljdyhxuwr.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_vPIV6UrupvcFQUEvp_be3w_VkcjhQAT';
+// 메일 링크로 막 들어온 경우. createClient가 주소의 토큰을 지우기 전에 확인한다
+const cameFromLink = /access_token|[?&]code=/.test(location.hash + location.search);
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -1289,10 +1310,13 @@ async function start() {
   renderMe();
   $('#me').classList.remove('hidden');
   $('#me-email').textContent = session.user.email;
+  state.user = session.user;
+  renderPasswordRow();
   await loadStatic();
   await loadPrivate();
   await Promise.all([loadMonth(), loadChores(), loadNotices(), loadDocs()]);
   watchChanges();
+  if (cameFromLink && !hasPassword()) openPasswordDialog();
 }
 
 function showLogin(msg = '', error = false) {
@@ -1306,13 +1330,69 @@ function showLogin(msg = '', error = false) {
 $('#login-form').addEventListener('submit', async e => {
   e.preventDefault();
   const email = $('#login-email').value.trim();
+  const password = $('#login-password').value;
   const btn = e.submitter;
   btn.disabled = true;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false;
+  if (error?.code === 'invalid_credentials')
+    return showLogin('이메일이나 비밀번호가 맞지 않아요. 아직 비밀번호를 안 정했다면 아래에서 로그인 링크를 받아 주세요.', true);
+  if (error) return showLogin(error.message, true);
+  $('#login-password').value = '';
+});
+
+// 메일 링크는 처음 들어올 때와 비밀번호를 잊었을 때만 쓴다
+$('#login-link').addEventListener('click', async e => {
+  const input = $('#login-email');
+  if (!input.reportValidity()) return;
+  const btn = e.currentTarget;
+  btn.disabled = true;
   const redirect = location.origin + location.pathname;
-  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: redirect } });
+  const { error } = await sb.auth.signInWithOtp({ email: input.value.trim(), options: { emailRedirectTo: redirect } });
   btn.disabled = false;
   if (error) return showLogin(error.message, true);
-  showLogin('메일함을 확인해 주세요. 링크를 누르면 바로 들어와요.');
+  showLogin('메일함을 확인해 주세요. 링크를 누르면 바로 들어와요. 들어온 뒤 더보기에서 비밀번호를 정해 두면 다음부터는 메일 없이 들어와요.');
+});
+
+// 비밀번호 ------------------------------------------------------------
+
+const hasPassword = () => !!state.user?.user_metadata?.has_password;
+function renderPasswordRow() {
+  $('#pw-sub').textContent = hasPassword() ? '바꾸기' : '아직 안 정했어요 · 정하면 메일 없이 들어와요';
+}
+function openPasswordDialog() {
+  $('#pw-form').reset();
+  $('#pw-username').value = state.user.email;
+  $('#pw-dialog-title').textContent = hasPassword() ? '비밀번호 바꾸기' : '비밀번호 정하기';
+  $('#pw-msg').textContent = '';
+  $('#pw-dialog').showModal();
+}
+$('#pw-open').addEventListener('click', openPasswordDialog);
+$('#pw-cancel').addEventListener('click', () => $('#pw-dialog').close());
+$('#pw-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const password = $('#pw-new').value;
+  const msg = $('#pw-msg');
+  if (password !== $('#pw-again').value) {
+    msg.textContent = '두 칸에 넣은 비밀번호가 달라요.';
+    return;
+  }
+  const btn = e.submitter;
+  btn.disabled = true;
+  const { data, error } = await sb.auth.updateUser({ password, data: { has_password: true } });
+  btn.disabled = false;
+  if (error) {
+    msg.textContent = {
+      weak_password: '비밀번호가 너무 쉬워요. 더 길게 정해 주세요.',
+      same_password: '지금 비밀번호와 같아요. 다른 비밀번호로 정해 주세요.',
+      reauthentication_needed: '보안을 위해 메일 링크로 다시 로그인한 뒤 바꿔 주세요.',
+    }[error.code] || error.message;
+    return;
+  }
+  state.user = data.user;
+  renderPasswordRow();
+  $('#pw-dialog').close();
+  toast('비밀번호를 저장했어요. 다음부터는 메일 없이 들어와요');
 });
 
 $('#logout').addEventListener('click', async () => {
