@@ -1492,8 +1492,9 @@ function renderSchedule() {
   }
   const byDay = {};
   for (const ev of state.events) (byDay[ev.date] ||= []).push(ev);
-  let html = '일월화수목금토'.split('').map((d, i) => `<div class="dow ${i === 6 ? 'sat' : i === 0 ? 'sun' : ''}">${d}</div>`).join('');
-  html += '<div class="day out"></div>'.repeat(first.getDay());
+  // 월요일부터 시작
+  let html = '월화수목금토일'.split('').map((d, i) => `<div class="dow ${i === 5 ? 'sat' : i === 6 ? 'sun' : ''}">${d}</div>`).join('');
+  html += '<div class="day out"></div>'.repeat((first.getDay() + 6) % 7);
   for (let d = 1; d <= days; d++) {
     const iso = `${state.month}-${pad(d)}`;
     const dow = (first.getDay() + d - 1) % 7;
