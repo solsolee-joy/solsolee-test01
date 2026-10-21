@@ -7,7 +7,7 @@
 - 화면: `household/index.html` 한 파일. GitHub Pages가 브랜치 `ccr-1624c47a-rm3p6v`에서 배포
   - https://solsolee-joy.github.io/solsolee-test01/household/
 - 데이터: Supabase 프로젝트 `twrcgrflwvwljdyhxuwr`. 스키마는 `supabase/migrations/`에 순서대로 있고 전부 적용됨
-- 디자인: 크림·월넛·올리브·앰버 팔레트, 온글잎 박다현체 제목, 손그림 테두리, 동숲 아이콘. 자세한 결정은 README 진행 상황
+- 디자인: 크림·월넛·올리브·앰버 팔레트, 온글잎 박다현체 제목, 이서윤체 본문·숫자, 손그림 테두리, 동숲 아이콘. 자세한 결정은 README 진행 상황
 
 ## 확인된 것
 

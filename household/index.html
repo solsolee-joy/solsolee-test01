@@ -12,12 +12,19 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Gothic+Coding:wght@400;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;600;700&display=swap">
 <style>
 /* 온글잎 박다현체 (OFL, 눈누 웹폰트). 불러오기 전이나 실패하면 고운돋움으로 보인다 */
 @font-face {
   font-family: "OngleipParkDahyeon";
   src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2411-3@1.0/Ownglyph_ParkDaHyun.woff2") format("woff2");
+  font-weight: normal;
+  font-display: swap;
+}
+/* 이서윤체 (눈누 웹폰트). 본문과 숫자. 불러오기 전이나 실패하면 프리텐다드로 보인다 */
+@font-face {
+  font-family: "IsYun";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2202-2@1.0/LeeSeoyun.woff") format("woff");
   font-weight: normal;
   font-display: swap;
 }
@@ -47,7 +54,8 @@
   --shadow: 0 1px 0 rgba(90, 60, 30, .06), 0 6px 18px rgba(90, 60, 30, .05);
   --f-title: "OngleipParkDahyeon", "Gowun Dodum", "Pretendard Variable", Pretendard, "Noto Sans KR", sans-serif;
   --sketch: #8a7560;
-  --f-num: "Nanum Gothic Coding", ui-monospace, monospace;
+  --f-body: "IsYun", "Pretendard Variable", Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+  --f-num: var(--f-body);
   --i-line: #4a3a2c; --i-cream: #fbf3e4; --i-terra: #d98b5f; --i-wood: #b98b5e; --i-blue: #9bb8d3; --i-olive: #9db27a; --i-mustard: #e6bf62; --i-rose: #e9aeb1;
   color-scheme: light;
 }
@@ -113,7 +121,7 @@ html, body { margin: 0; }
 body {
   background: var(--bg);
   color: var(--text);
-  font: 16px/1.5 "Pretendard Variable", Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+  font: 16px/1.5 var(--f-body);
   letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
   padding-bottom: calc(76px + env(safe-area-inset-bottom));
@@ -504,8 +512,35 @@ dialog::backdrop { background: var(--scrim); }
   position: relative; border-radius: 14px; background: var(--fill); overflow: hidden; display: flex; flex-direction: column;
   text-decoration: none; color: inherit; min-height: 120px;
 }
-.file .thumb { border-radius: 2px; height: 96px; display: grid; place-items: center; background: var(--fill-strong); color: var(--muted); font-weight: 700; font-size: 14px; }
-.file .thumb img { width: 100%; height: 100%; object-fit: cover; }
+.file .thumb { position: relative; overflow: hidden; border-radius: 2px; height: 96px; display: grid; place-items: center; background: var(--fill-strong); color: var(--muted); font-weight: 700; font-size: 14px; }
+/* 큰 사진이 틀 밖으로 나오지 않게 틀에 맞춰 자른다 */
+.file .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+
+/* 사진 크게 보기 */
+#lightbox {
+  width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; border-radius: 0;
+  background: rgba(20, 14, 9, .94); color: #fffaf2; overflow: hidden;
+}
+#lightbox::backdrop { background: transparent; }
+.lb-track { display: flex; height: 100%; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior: contain; }
+.lb-track::-webkit-scrollbar { display: none; }
+.lb-slide { flex: 0 0 100%; scroll-snap-align: center; display: flex; align-items: center; justify-content: center; padding: 60px 16px 76px; box-sizing: border-box; }
+.lb-slide img { max-width: 100%; max-height: calc(100dvh - 136px); object-fit: contain; border-radius: 4px; box-shadow: 0 10px 40px rgba(0, 0, 0, .45); background: #fff; }
+.lb-bar {
+  position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px calc(16px + env(safe-area-inset-bottom)); font-size: 14px; pointer-events: none;
+}
+.lb-bar #lb-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .85; }
+.lb-bar a { pointer-events: auto; color: inherit; padding: 8px 14px; border-radius: 999px; background: rgba(255, 255, 255, .14); text-decoration: none; }
+.lb-close, .lb-nav {
+  position: absolute; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .14); color: #fffaf2;
+  width: 44px; height: 44px; font-size: 26px; line-height: 44px; padding: 0;
+}
+.lb-close { top: calc(12px + env(safe-area-inset-top)); right: 12px; }
+.lb-nav { top: 50%; transform: translateY(-50%); }
+.lb-nav.prev { left: 16px; } .lb-nav.next { right: 16px; }
+.lb-nav:disabled { opacity: 0; pointer-events: none; }
+@media (hover: none) { .lb-nav { display: none; } }
 .file .fname { font-size: 13px; padding: 8px 10px 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .file .fsize { font-size: 12px; color: var(--muted); padding: 0 10px 8px; }
 .file .x {
@@ -633,7 +668,7 @@ nav.tabs button .ico { opacity: .6; filter: saturate(.45); transition: opacity .
 nav.tabs button[aria-current="page"] .ico { opacity: 1; filter: none; transform: rotate(-4deg) scale(1.08); }
 .showcase-btn .ico { width: 20px; height: 20px; }
 
-/* 큰 금액은 타자기 느낌 숫자 */
+/* 큰 금액도 손글씨 숫자 */
 .hero .big, .hero .split .v, .env .left, .debt .bal, .plan-sum .v, .up-row .a, .row .end .amt, .totals b, .up-group .num {
   font-family: var(--f-num); letter-spacing: -0.03em;
 }
@@ -1050,6 +1085,13 @@ body {
   </form>
 </dialog>
 
+<dialog id="lightbox" aria-label="사진 크게 보기">
+  <div class="lb-track" id="lb-track"></div>
+  <button class="lb-nav prev" type="button" id="lb-prev" aria-label="이전 사진">‹</button>
+  <button class="lb-nav next" type="button" id="lb-next" aria-label="다음 사진">›</button>
+  <button class="lb-close" type="button" id="lb-close" aria-label="닫기">×</button>
+  <div class="lb-bar"><span id="lb-name"></span><span id="lb-count" class="num"></span><a id="lb-open" target="_blank" rel="noopener">원본</a></div>
+</dialog>
 <dialog id="doc-dialog">
   <div class="sheet hidden" id="doc-view">
     <div class="doc-meta"><span class="cat" id="dv-cat"></span><span class="vis" id="dv-vis"></span><span id="dv-date" class="num"></span></div>
@@ -2869,10 +2911,12 @@ async function renderDocFiles() {
     const { data } = await sb.storage.from('docs').createSignedUrls(files.map(f => f.path), 600);
     urls = Object.fromEntries((data || []).map(u => [u.path, u.signedUrl]));
   }
+  const images = files.filter(f => (f.mime || '').startsWith('image/'));
+  state.lbImages = images.map(f => ({ url: urls[f.path] || '', name: f.name }));
   const tile = (f, editable) => {
     const url = urls[f.path] || '#';
     const isImg = (f.mime || '').startsWith('image/');
-    return `<a class="file" href="${esc(url)}" target="_blank" rel="noopener">
+    return `<a class="file" href="${esc(url)}" target="_blank" rel="noopener"${isImg ? ` data-lb="${images.indexOf(f)}"` : ''}>
       <span class="thumb">${isImg ? `<img src="${esc(url)}" alt="" loading="lazy">` : esc(fileExt(f.name).toUpperCase() || '파일')}</span>
       <span class="fname">${esc(f.name)}</span><span class="fsize num">${f.size ? fileSize(f.size) : ''}</span>
       ${editable ? `<button class="x" type="button" data-file-del="${f.id}" aria-label="${esc(f.name)} 지우기">×</button>` : ''}
@@ -2938,6 +2982,41 @@ $('#doc-files').addEventListener('change', e => { if (e.target.id === 'doc-input
 $('#doc-files').addEventListener('dragover', e => { e.preventDefault(); $('#doc-drop')?.classList.add('drag'); });
 $('#doc-files').addEventListener('dragleave', () => $('#doc-drop')?.classList.remove('drag'));
 $('#doc-files').addEventListener('drop', e => { e.preventDefault(); $('#doc-drop')?.classList.remove('drag'); uploadFiles(e.dataTransfer.files); });
+// 사진 크게 보기: 옆으로 넘기고, 사진 바깥 어두운 곳을 누르면 닫힌다. PDF 같은 파일은 새 탭으로 연다
+const lbTrack = $('#lb-track');
+const lbIndex = () => Math.round(lbTrack.scrollLeft / (lbTrack.clientWidth || 1));
+function updateLightbox() {
+  const i = lbIndex(), img = state.lbImages[i];
+  if (!img) return;
+  $('#lb-name').textContent = img.name;
+  $('#lb-count').textContent = state.lbImages.length > 1 ? `${i + 1} / ${state.lbImages.length}` : '';
+  $('#lb-open').href = img.url;
+  $('#lb-prev').disabled = i === 0;
+  $('#lb-next').disabled = i === state.lbImages.length - 1;
+}
+function openLightbox(i) {
+  lbTrack.innerHTML = state.lbImages.map(img => `<div class="lb-slide"><img src="${esc(img.url)}" alt="${esc(img.name)}"></div>`).join('');
+  $('#lightbox').showModal();
+  lbTrack.scrollLeft = i * lbTrack.clientWidth;
+  updateLightbox();
+}
+const lbStep = d => lbTrack.scrollBy({ left: d * lbTrack.clientWidth, behavior: 'smooth' });
+lbTrack.addEventListener('scroll', updateLightbox, { passive: true });
+$('#lb-prev').addEventListener('click', () => lbStep(-1));
+$('#lb-next').addEventListener('click', () => lbStep(1));
+$('#lb-close').addEventListener('click', () => $('#lightbox').close());
+$('#lightbox').addEventListener('click', e => { if (!e.target.closest('img, button, a')) $('#lightbox').close(); });
+$('#lightbox').addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') lbStep(-1);
+  if (e.key === 'ArrowRight') lbStep(1);
+});
+for (const box of [$('#dv-files'), $('#doc-files')]) box.addEventListener('click', e => {
+  const tile = e.target.closest('[data-lb]');
+  if (!tile || e.target.closest('[data-file-del]')) return;
+  e.preventDefault();
+  openLightbox(Number(tile.dataset.lb));
+});
+
 $('#doc-files').addEventListener('click', async e => {
   const id = e.target.closest('[data-file-del]')?.dataset.fileDel;
   if (!id) return;
