@@ -389,6 +389,26 @@ dialog::backdrop { background: var(--scrim); }
   #view-chores:not(.hidden) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* 나만 보는 메모 */
+.private-field { background: var(--accent-soft); border-radius: 14px; padding: 12px; }
+.private-field .lbl { display: flex; align-items: center; gap: 6px; color: var(--accent); font-weight: 600; }
+.private-field .lbl small { color: var(--muted); font-weight: 400; margin-left: auto; }
+.private-field textarea { background: var(--surface) !important; min-height: 60px !important; }
+.lock { width: 14px; height: 14px; vertical-align: -2px; }
+.tag.lock-tag { color: var(--accent); background: var(--accent-soft); display: inline-flex; align-items: center; padding: 1px 5px; }
+.tag.lock-tag .lock { width: 11px; height: 11px; }
+.notice { padding: 14px 0; }
+.notice + .notice { border-top: 1px solid var(--line); }
+.notice .head { display: flex; align-items: baseline; gap: 8px; }
+.notice .head b { flex: 1; font-size: 16px; }
+.notice .head .when { font-size: 13px; color: var(--muted); }
+.notice .text { font-size: 15px; color: var(--text-2); white-space: pre-wrap; margin-top: 4px; }
+.notice .edit, .note .edit { border: 0; background: none; color: var(--accent); font-size: 13px; font-weight: 600; padding: 0; }
+.pin { font-size: 11px; font-weight: 700; color: var(--warn); background: var(--warn-soft); padding: 1px 6px; border-radius: 6px; }
+.privacy-banner { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--accent); background: var(--accent-soft); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; }
+.note .item { display: flex; gap: 8px; }
+.note .item span { flex: 1; }
+
 /* 더보기 */
 .more-row .avatar { border-radius: 12px; }
 
@@ -477,7 +497,12 @@ dialog::backdrop { background: var(--scrim); }
     </section>
 
     <section class="view hidden" id="view-notes">
+      <div class="privacy-banner"><svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>운영 메모는 나만 볼 수 있어요. 함께 알아야 할 건 공지에 써 주세요.</div>
       <div id="notes-list"></div>
+    </section>
+
+    <section class="view hidden" id="view-notices">
+      <div class="block"><div id="notices-list"></div></div>
     </section>
 
     <section class="view hidden" id="view-schedule">
@@ -517,7 +542,8 @@ dialog::backdrop { background: var(--scrim); }
         <div class="rows">
           <button class="row more-row" type="button" data-goto="budget"><span class="avatar" style="--c:#00b386">봉</span><span class="body"><span class="title">봉투 배정</span><span class="sub">달마다 봉투에 넣을 금액</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
           <button class="row more-row" type="button" data-goto="debt"><span class="avatar" style="--c:#12a5b8">빚</span><span class="body"><span class="title">부채</span><span class="sub">대출 잔액과 금리</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
-          <button class="row more-row" type="button" data-goto="notes"><span class="avatar" style="--c:#8b5cf6">메</span><span class="body"><span class="title">운영 메모</span><span class="sub">목표, 보호지출, 소득, 계좌 흐름</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+          <button class="row more-row" type="button" data-goto="notices"><span class="avatar" style="--c:#f59f00">공</span><span class="body"><span class="title">공지</span><span class="sub">둘이 함께 알아야 할 것</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+          <button class="row more-row" type="button" data-goto="notes"><span class="avatar" style="--c:#8b5cf6">메</span><span class="body"><span class="title">운영 메모</span><span class="sub">나만 보는 메모</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
         </div>
       </div>
       <div class="block">
@@ -549,6 +575,8 @@ dialog::backdrop { background: var(--scrim); }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="14" rx="2.5"/><path d="M3.5 8l8.5 5.5L20.5 8"/></svg>봉투 배정</button>
       <button type="button" class="desk-only" data-view="debt">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>부채</button>
+      <button type="button" class="desk-only" data-view="notices">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h3l6 4V6L7 10z"/><path d="M17 9a4 4 0 0 1 0 6"/></svg>공지</button>
       <button type="button" class="desk-only" data-view="notes">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7" stroke-linecap="round"/></svg>운영 메모</button>
       <div class="nav-brand desk-only">우리집</div>
@@ -577,7 +605,8 @@ dialog::backdrop { background: var(--scrim); }
       <label class="full">결제수단<input id="f-pay" list="dl-pay" autocomplete="off"></label>
       <label id="f-debt-wrap" class="full hidden">대출<select id="f-debt"><option value="">선택 안 함</option></select></label>
       <label class="full">태그 (쉼표로 구분)<input id="f-tags" list="dl-tags" autocomplete="off" placeholder="이사, 사이드 프로젝트"></label>
-      <label class="full">메모<textarea id="f-memo"></textarea></label>
+      <label class="full">함께 보는 메모<textarea id="f-memo"></textarea></label>
+      <label class="full private-field"><span class="lbl"><svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>나만 보는 메모<small>상대에게 안 보여요</small></span><textarea id="f-private"></textarea></label>
       <div class="checks">
         <label class="toggle"><input id="f-review" type="checkbox"><span>검토 필요</span></label>
         <label class="toggle"><input id="f-oneoff" type="checkbox"><span>일회성</span></label>
@@ -620,7 +649,8 @@ dialog::backdrop { background: var(--scrim); }
       <label>시작<input id="e-start" type="time"></label>
       <label>끝<input id="e-end" type="time"></label>
       <label class="full">장소<input id="e-place" autocomplete="off"></label>
-      <label class="full">메모<textarea id="e-memo"></textarea></label>
+      <label class="full">함께 보는 메모<textarea id="e-memo"></textarea></label>
+      <label class="full private-field"><span class="lbl"><svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>나만 보는 메모<small>상대에게 안 보여요</small></span><textarea id="e-private"></textarea></label>
     </div>
     <div class="actions">
       <button class="btn danger hidden" id="event-delete" type="button">삭제</button>
@@ -641,7 +671,8 @@ dialog::backdrop { background: var(--scrim); }
         <option value="3">3일마다</option><option value="7">매주</option><option value="14">2주마다</option>
         <option value="30">한 달마다</option></select></label>
       <label>다음에 할 날<input id="c-due" type="date" required></label>
-      <label class="full">메모<textarea id="c-memo"></textarea></label>
+      <label class="full">함께 보는 메모<textarea id="c-memo"></textarea></label>
+      <label class="full private-field"><span class="lbl"><svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>나만 보는 메모<small>상대에게 안 보여요</small></span><textarea id="c-private"></textarea></label>
     </div>
     <div class="actions">
       <button class="btn danger hidden" id="chore-delete" type="button">삭제</button>
@@ -651,6 +682,24 @@ dialog::backdrop { background: var(--scrim); }
   </form>
 </dialog>
 
+<dialog id="memo-dialog">
+  <form class="sheet" id="memo-form" method="dialog">
+    <h3 id="memo-dialog-title"></h3>
+    <div class="form">
+      <label class="full" id="m-section-wrap">구분<input id="m-section" list="dl-sections" autocomplete="off" placeholder="예: 목표, 계좌, 이사"></label>
+      <label class="full">제목<input id="m-title" required autocomplete="off"></label>
+      <label class="full">내용<textarea id="m-body" style="min-height:140px"></textarea></label>
+      <div class="checks" id="m-pin-wrap"><label class="toggle"><input id="m-pinned" type="checkbox"><span>홈에 고정</span></label></div>
+    </div>
+    <div class="actions">
+      <button class="btn danger hidden" id="memo-delete" type="button">삭제</button>
+      <button class="btn" type="button" id="memo-cancel">닫기</button>
+      <button class="btn primary" type="submit">저장</button>
+    </div>
+  </form>
+</dialog>
+
+<datalist id="dl-sections"></datalist>
 <datalist id="dl-pay"></datalist>
 <datalist id="dl-cat"></datalist>
 <datalist id="dl-sub"></datalist>
@@ -712,6 +761,10 @@ const state = {
   editingChore: null,
   eventOwner: null,
   choreAssignee: null,
+  privateNotes: new Map(),
+  notes: [],
+  notices: [],
+  editingMemo: null,
 };
 
 const TOGETHER = { email: null, display_name: '함께', color: '#8b5cf6' };
@@ -770,7 +823,8 @@ async function start() {
   $('#me').classList.remove('hidden');
   $('#me-email').textContent = session.user.email;
   await loadStatic();
-  await Promise.all([loadMonth(), loadChores()]);
+  await loadPrivate();
+  await Promise.all([loadMonth(), loadChores(), loadNotices()]);
   watchChanges();
 }
 
@@ -954,6 +1008,7 @@ function txHtml(t) {
   const tags = [
     t.needs_review ? '<span class="tag warn">확인</span>' : '',
     t.one_off ? '<span class="tag">일회성</span>' : '',
+    privateNote('transaction', t.id) ? `<span class="tag lock-tag"><svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>` : '',
   ].join('');
   return `<button class="row" type="button" data-id="${esc(t.id)}">
     ${avatar}
@@ -1029,22 +1084,113 @@ function renderDebt() {
 async function renderNotes() {
   const { data, error } = await sb.from('notes').select('*').order('id');
   if (error) return fail(error);
+  state.notes = data;
   const sections = new Map();
   for (const n of data) {
     if (!sections.has(n.section)) sections.set(n.section, []);
     sections.get(n.section).push(n);
   }
+  fillDatalist('#dl-sections', [...sections.keys()]);
   $('#notes-list').innerHTML = [...sections].map(([s, list]) => `
     <div class="block"><div class="block-head"><h2>${esc(s)}</h2></div>
-      ${list.map(n => `<div class="note"><div class="item">${esc(n.item)}</div><div class="content">${esc(n.content)}</div></div>`).join('')}
-    </div>`).join('');
+      ${list.map(n => `<div class="note"><div class="item"><span>${esc(n.item)}</span><button class="edit" type="button" data-note="${n.id}">고치기</button></div><div class="content">${esc(n.content)}</div></div>`).join('')}
+    </div>`).join('') || '<div class="block empty">운영 메모가 없어요</div>';
 }
+
+// 나만 보는 메모 -------------------------------------------------------
+
+function privateNote(type, id) {
+  return state.privateNotes.get(`${type}:${id}`) || '';
+}
+
+async function loadPrivate() {
+  const { data, error } = await sb.from('private_notes').select('target_type, target_id, body');
+  if (error) return fail(error);
+  state.privateNotes = new Map(data.map(r => [`${r.target_type}:${r.target_id}`, r.body]));
+}
+
+async function savePrivate(type, id, text) {
+  const body = text.trim();
+  if (body === privateNote(type, id)) return;
+  const res = body
+    ? await sb.from('private_notes').upsert(
+        { owner: state.me.email, target_type: type, target_id: String(id), body, updated_at: new Date().toISOString() },
+        { onConflict: 'owner,target_type,target_id' })
+    : await sb.from('private_notes').delete().eq('target_type', type).eq('target_id', String(id));
+  if (res.error) throw res.error;
+  if (body) state.privateNotes.set(`${type}:${id}`, body);
+  else state.privateNotes.delete(`${type}:${id}`);
+}
+
+// 공지 ---------------------------------------------------------------
+
+async function loadNotices() {
+  const { data, error } = await sb.from('notices').select('*').order('pinned', { ascending: false }).order('updated_at', { ascending: false });
+  if (error) return fail(error);
+  state.notices = data;
+  $('#notices-list').innerHTML = data.map(n => `<div class="notice">
+      <div class="head">${n.pinned ? '<span class="pin">고정</span>' : ''}<b>${esc(n.title)}</b>
+        <span class="when num">${esc(person(n.created_by).display_name)} · ${mmdd(n.updated_at.slice(0, 10))}</span>
+        <button class="edit" type="button" data-notice="${n.id}">고치기</button></div>
+      ${n.body ? `<div class="text">${esc(n.body)}</div>` : ''}
+    </div>`).join('') || '<div class="placeholder"><b>아직 공지가 없어요</b>둘이 함께 알아야 할 것을 적어 두세요. 예: 이번 달 목표, 이사 일정</div>';
+  renderToday();
+}
+
+function openMemo(kind, item) {
+  state.editingMemo = { kind, item: item || null };
+  const isNote = kind === 'note';
+  $('#memo-dialog-title').textContent = (item ? '고치기 · ' : '') + (isNote ? '운영 메모 (나만 보기)' : '공지 (함께 보기)');
+  $('#m-section-wrap').classList.toggle('hidden', !isNote);
+  $('#m-pin-wrap').classList.toggle('hidden', isNote);
+  $('#m-section').required = isNote;
+  $('#m-section').value = isNote ? (item?.section || '') : '';
+  $('#m-title').value = (isNote ? item?.item : item?.title) || '';
+  $('#m-body').value = (isNote ? item?.content : item?.body) || '';
+  $('#m-pinned').checked = !!item?.pinned;
+  $('#memo-delete').classList.toggle('hidden', !item);
+  $('#memo-dialog').showModal();
+}
+$('#memo-cancel').addEventListener('click', () => $('#memo-dialog').close());
+$('#memo-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const { kind, item } = state.editingMemo;
+  const title = $('#m-title').value.trim(), body = $('#m-body').value.trim();
+  const now = new Date().toISOString();
+  let res;
+  if (kind === 'note') {
+    const row = { section: $('#m-section').value.trim(), item: title, content: body || title, updated_on: today() };
+    res = item ? await sb.from('notes').update(row).eq('id', item.id) : await sb.from('notes').insert(row);
+  } else {
+    const row = { title, body: body || null, pinned: $('#m-pinned').checked, updated_at: now };
+    res = item ? await sb.from('notices').update(row).eq('id', item.id) : await sb.from('notices').insert(row);
+  }
+  if (res.error) return fail(res.error);
+  $('#memo-dialog').close();
+  toast('저장했어요');
+  kind === 'note' ? renderNotes() : loadNotices();
+});
+$('#memo-delete').addEventListener('click', async () => {
+  const { kind, item } = state.editingMemo;
+  if (!item || !confirm('지울까요?')) return;
+  const { error } = await sb.from(kind === 'note' ? 'notes' : 'notices').delete().eq('id', item.id);
+  if (error) return fail(error);
+  $('#memo-dialog').close();
+  toast('지웠어요');
+  kind === 'note' ? renderNotes() : loadNotices();
+});
+document.addEventListener('click', e => {
+  const noteId = e.target.closest('[data-note]')?.dataset.note;
+  if (noteId) openMemo('note', state.notes.find(n => String(n.id) === noteId));
+  const noticeId = e.target.closest('[data-notice]')?.dataset.notice;
+  if (noticeId) openMemo('notice', state.notices.find(n => String(n.id) === noticeId));
+});
 
 // 이동 ---------------------------------------------------------------
 
-const VIEW_TITLES = { debt: '부채', notes: '운영 메모', chores: '집안일', more: '더보기' };
-const TAB_OF = { budget: 'more', debt: 'more', notes: 'more' };
-const FAB_LABEL = { home: '기록하기', tx: '기록하기', schedule: '일정 추가', chores: '집안일 추가' };
+const VIEW_TITLES = { debt: '부채', notes: '운영 메모', notices: '공지', chores: '집안일', more: '더보기' };
+const TAB_OF = { budget: 'more', debt: 'more', notes: 'more', notices: 'more' };
+const FAB_LABEL = { home: '기록하기', tx: '기록하기', schedule: '일정 추가', chores: '집안일 추가', notes: '메모 추가', notices: '공지 쓰기' };
 
 function go(view) {
   state.view = view;
@@ -1157,6 +1303,7 @@ function openTx(t) {
   $('#f-debt').value = t?.debt_id || '';
   $('#f-tags').value = (t?.tags || []).join(', ');
   $('#f-memo').value = t?.memo || '';
+  $('#f-private').value = t ? privateNote('transaction', t.id) : '';
   $('#f-review').checked = !!t?.needs_review;
   $('#f-oneoff').checked = !!t?.one_off;
   syncDebtField();
@@ -1166,6 +1313,8 @@ function openTx(t) {
 
 $('#add-tx').addEventListener('click', () => {
   if (state.view === 'schedule') openEvent(null);
+  else if (state.view === 'notes') openMemo('note', null);
+  else if (state.view === 'notices') openMemo('notice', null);
   else if (state.view === 'chores') openChore(null);
   else openTx(null);
 });
@@ -1207,19 +1356,20 @@ $('#tx-form').addEventListener('submit', async e => {
   const btn = $('#tx-save');
   btn.disabled = true;
   try {
+    let id = state.editing?.id;
     if (state.editing) {
-      const { error } = await sb.from('transactions').update(row).eq('id', state.editing.id);
+      const { error } = await sb.from('transactions').update(row).eq('id', id);
       if (error) throw error;
     } else {
       const makeId = await nextId(row.date);
-      let saved = false;
-      for (let n = 1; n <= 5 && !saved; n++) {
+      for (let n = 1; n <= 5 && !id; n++) {
         const { error } = await sb.from('transactions').insert({ ...row, id: makeId(n), source: '앱 입력' });
-        if (!error) saved = true;
+        if (!error) id = makeId(n);
         else if (error.code !== '23505') throw error;
       }
-      if (!saved) throw new Error('거래 번호를 만들지 못했어요. 다시 시도해 주세요');
+      if (!id) throw new Error('거래 번호를 만들지 못했어요. 다시 시도해 주세요');
     }
+    await savePrivate('transaction', id, $('#f-private').value);
     $('#tx-dialog').close();
     toast('저장했어요');
     if (row.date.slice(0, 7) !== state.month) state.month = row.date.slice(0, 7);
@@ -1329,7 +1479,7 @@ function eventRow(ev, showDate = false) {
   return `<button class="row" type="button" data-event="${esc(ev.id)}">
     <span class="who-bar" style="--c:${p.color}"></span>
     <span class="time num">${time}</span>
-    <span class="body"><span class="title">${esc(ev.title)}</span><span class="sub">${esc(sub)}</span></span>
+    <span class="body"><span class="title">${esc(ev.title)}${privateNote('event', ev.id) ? ` <span class="tag lock-tag"><svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>` : ''}</span><span class="sub">${esc(sub)}</span></span>
   </button>`;
 }
 
@@ -1420,6 +1570,7 @@ function openEvent(ev) {
   $('#e-end').value = hhmm(ev?.end_time);
   $('#e-place').value = ev?.place || '';
   $('#e-memo').value = ev?.memo || '';
+  $('#e-private').value = ev ? privateNote('event', ev.id) : '';
   syncEventHint();
   $('#event-dialog').showModal();
   if (!ev) $('#e-title').focus();
@@ -1444,10 +1595,11 @@ $('#event-form').addEventListener('submit', async e => {
     memo: $('#e-memo').value.trim() || null,
   };
   const q = state.editingEvent
-    ? sb.from('events').update(row).eq('id', state.editingEvent.id)
-    : sb.from('events').insert(row);
-  const { error } = await q;
+    ? sb.from('events').update(row).eq('id', state.editingEvent.id).select('id').single()
+    : sb.from('events').insert(row).select('id').single();
+  const { data: saved, error } = await q;
   if (error) return fail(error);
+  try { await savePrivate('event', state.editingEvent?.id ?? saved.id, $('#e-private').value); } catch (err) { return fail(err); }
   $('#event-dialog').close();
   toast('일정을 저장했어요');
   state.month = row.date.slice(0, 7);
@@ -1504,7 +1656,7 @@ function choreRow(c) {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
     </button>
     <button class="open" type="button" data-chore="${c.id}">
-      <span class="title" style="display:block;font-weight:500">${esc(c.title)}</span>
+      <span class="title" style="display:block;font-weight:500">${esc(c.title)}${privateNote('chore', c.id) ? ` <span class="tag lock-tag"><svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>` : ''}</span>
       <span class="sub" style="display:block;font-size:13px;color:var(--muted)">${esc(sub)}</span>
     </button>
     <span class="due num ${diff < 0 ? 'late' : diff === 0 ? 'today' : ''}">${due}</span>
@@ -1538,6 +1690,9 @@ function renderToday() {
   const parts = [];
   parts.push(`<div class="block-head"><h2>오늘 ${mmdd(t)} ${weekday(t)}요일</h2></div>`);
   parts.push('<div class="rows">');
+  parts.push((state.notices || []).filter(n => n.pinned).map(n => `<button class="row" type="button" data-goto-view="notices">
+    <span class="avatar" style="--c:var(--warn)">공</span>
+    <span class="body"><span class="title">${esc(n.title)}</span><span class="sub">${esc(n.body || '')}</span></span>${ICONS.chev}</button>`).join(''));
   parts.push(events.map(ev => eventRow(ev)).join('') || '<div class="row"><span class="body"><span class="sub">오늘 일정은 없어요</span></span></div>');
   parts.push(`<button class="row" type="button" data-goto-view="chores">
     <span class="avatar" style="--c:${due.length ? 'var(--accent)' : 'var(--muted)'}">✓</span>
@@ -1584,6 +1739,7 @@ function openChore(c) {
   }
   $('#c-due').value = c?.due_on || today();
   $('#c-memo').value = c?.memo || '';
+  $('#c-private').value = c ? privateNote('chore', c.id) : '';
   $('#chore-dialog').showModal();
   if (!c) $('#c-title').focus();
 }
@@ -1604,10 +1760,11 @@ $('#chore-form').addEventListener('submit', async e => {
     memo: $('#c-memo').value.trim() || null,
   };
   const q = state.editingChore
-    ? sb.from('chores').update(row).eq('id', state.editingChore.id)
-    : sb.from('chores').insert(row);
-  const { error } = await q;
+    ? sb.from('chores').update(row).eq('id', state.editingChore.id).select('id').single()
+    : sb.from('chores').insert(row).select('id').single();
+  const { data: saved, error } = await q;
   if (error) return fail(error);
+  try { await savePrivate('chore', state.editingChore?.id ?? saved.id, $('#c-private').value); } catch (err) { return fail(err); }
   $('#chore-dialog').close();
   toast('저장했어요');
   loadChores();
@@ -1636,13 +1793,15 @@ let pending = { month: false, chores: false, statics: false };
 let refreshTimer;
 
 function busy() {
-  return !!document.querySelector('dialog[open]') || document.activeElement?.matches('.alloc, #expected-income, #tx-search');
+  return !!document.querySelector('dialog[open]') || !!document.activeElement?.matches('.alloc, #expected-income, #tx-search');
 }
 
 function scheduleRefresh(table) {
   if (!table || MONTH_TABLES.has(table)) pending.month = true;
   if (!table || CHORE_TABLES.has(table)) pending.chores = true;
   if (table === 'settings' || table === 'debts') pending.statics = true;
+  if (!table || table === 'private_notes') pending.private = true;
+  if (!table || table === 'notices') pending.notices = true;
   clearTimeout(refreshTimer);
   refreshTimer = setTimeout(flushRefresh, 400);
 }
@@ -1653,7 +1812,9 @@ async function flushRefresh() {
   const job = pending;
   pending = { month: false, chores: false, statics: false };
   if (job.statics) await loadStatic();
-  await Promise.all([job.month && loadMonth(), job.chores && loadChores(), state.view === 'notes' && renderNotes()]);
+  if (job.private) { await loadPrivate(); job.month = job.chores = true; }
+  await Promise.all([job.month && loadMonth(), job.chores && loadChores(), job.notices && loadNotices(),
+    state.view === 'notes' && renderNotes()]);
 }
 
 function watchChanges() {
