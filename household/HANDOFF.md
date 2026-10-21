@@ -43,7 +43,7 @@
 
 ## 배포 안 된 변경
 
-- 자료 분류 레시피·살림팁, 메뉴 묶음 정리 (index.html). 푸시했는지는 `git status`의 ahead로 확인
+- 없음 (2026-10-22 6ae63e6까지 배포). 새로 생기면 여기 적는다
 
 Supabase Auth의 Site URL과 Redirect URL은 배포 주소로 돼 있는 것 확인함 (2026-10-21)
 
