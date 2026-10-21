@@ -145,7 +145,11 @@ main { padding: 4px 0 24px; }
   border: 1.6px solid color-mix(in srgb, var(--sketch) 55%, transparent); filter: url(#sketch);
 }
 .block-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
-.block-head h2 { font-family: var(--f-title); font-size: 22px; font-weight: 400; margin: 0; letter-spacing: 0; }
+.block-head h2 { font-family: var(--f-title); font-size: 22px; font-weight: 400; margin: 0; letter-spacing: 0; display: flex; align-items: center; gap: 6px; }
+.block-head h2::before {
+  content: ""; width: 18px; height: 18px; flex-shrink: 0; background: var(--accent); opacity: .85;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 21V6'/%3E%3Cpath d='M12 16c-4 0-6.5-2.2-6.5-5.5 4 0 6.5 2.2 6.5 5.5z'/%3E%3Cpath d='M12 11.5c3.6 0 5.8-2 5.8-5 -3.6 0-5.8 2-5.8 5z'/%3E%3Cpath d='M12 6c-.3-1.6.4-3 1.8-3.8'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 21V6'/%3E%3Cpath d='M12 16c-4 0-6.5-2.2-6.5-5.5 4 0 6.5 2.2 6.5 5.5z'/%3E%3Cpath d='M12 11.5c3.6 0 5.8-2 5.8-5 -3.6 0-5.8 2-5.8 5z'/%3E%3Cpath d='M12 6c-.3-1.6.4-3 1.8-3.8'/%3E%3C/svg%3E") center / contain no-repeat;
+}
 .block-head .aside { color: var(--muted); font-size: 14px; }
 
 /* 대표 숫자 */
@@ -473,6 +477,10 @@ dialog::backdrop { background: var(--scrim); }
 .tag.lock-tag { color: var(--accent); background: var(--accent-soft); display: inline-flex; align-items: center; padding: 1px 5px; }
 .tag.lock-tag .lock { width: 11px; height: 11px; }
 .notice { padding: 14px 0; }
+#notices-list .notice .text, .note .content {
+  background-image: repeating-linear-gradient(transparent 0 calc(1.7em - 1px), color-mix(in srgb, var(--sketch) 22%, transparent) calc(1.7em - 1px) 1.7em);
+  line-height: 1.7em; background-attachment: local;
+}
 .notice + .notice { border-top: 1px solid var(--line); }
 .notice .head { display: flex; align-items: baseline; gap: 8px; }
 .notice .head b { flex: 1; font-size: 16px; }
@@ -617,7 +625,10 @@ details.table-view th { color: var(--muted); }
   border: 1.5px solid color-mix(in srgb, var(--sketch) 45%, transparent); display: grid; place-items: center;
   font-family: var(--f-num); font-size: 12px; color: var(--on-accent);
 }
+.week-grid .sq { border-radius: 50%; }
 .week-grid .sq.on { background: color-mix(in srgb, var(--c) calc(45% + var(--n) * 15%), transparent); border-color: transparent; }
+.week-grid .sq svg { width: 58%; height: 58%; }
+.week-grid .sq b { font-weight: 700; font-size: 11px; }
 .week-grid .sq.future { opacity: .35; }
 #chores-week { grid-column: 1 / -1; }
 
@@ -2093,7 +2104,8 @@ function renderWeekGrid() {
     html += `<span class="who" style="--c:${m.color}"><i></i>${esc(m.display_name)}</span>`;
     html += days.map(d => {
       const n = logs.filter(l => l.done_by === m.email && l.done_on === d).length;
-      return `<span class="sq ${n ? 'on' : ''} ${d > today() ? 'future' : ''}" style="--c:${m.color};--n:${Math.min(n, 3)}" title="${mmdd(d)} ${n}개">${n > 1 ? n : ''}</span>`;
+      const mark = n > 1 ? `<b>${n}</b>` : n ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : '';
+      return `<span class="sq ${n ? 'on' : ''} ${d > today() ? 'future' : ''}" style="--c:${m.color};--n:${Math.min(n, 3)}" title="${mmdd(d)} ${n}개">${mark}</span>`;
     }).join('');
   }
   $('#week-grid').innerHTML = html;
