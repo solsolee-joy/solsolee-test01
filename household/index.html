@@ -409,6 +409,29 @@ dialog::backdrop { background: var(--scrim); }
 .note .item { display: flex; gap: 8px; }
 .note .item span { flex: 1; }
 
+/* 자료 */
+.files { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.file {
+  position: relative; border-radius: 14px; background: var(--fill); overflow: hidden; display: flex; flex-direction: column;
+  text-decoration: none; color: inherit; min-height: 120px;
+}
+.file .thumb { height: 96px; display: grid; place-items: center; background: var(--fill-strong); color: var(--muted); font-weight: 700; font-size: 14px; }
+.file .thumb img { width: 100%; height: 100%; object-fit: cover; }
+.file .fname { font-size: 13px; padding: 8px 10px 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file .fsize { font-size: 12px; color: var(--muted); padding: 0 10px 8px; }
+.file .x {
+  position: absolute; top: 6px; right: 6px; width: 26px; height: 26px; border-radius: 50%; border: 0;
+  background: rgba(0,0,0,.55); color: #fff; font-size: 15px; line-height: 26px; padding: 0;
+}
+.upload {
+  border: 2px dashed var(--fill-strong); border-radius: 14px; min-height: 120px; display: grid; place-items: center;
+  color: var(--muted); font-size: 14px; font-weight: 500; cursor: pointer; text-align: center; padding: 8px;
+}
+.upload:hover, .upload.drag { border-color: var(--accent); color: var(--accent); }
+.upload input { display: none; }
+.files-head { display: flex; justify-content: space-between; align-items: baseline; margin: 18px 0 10px; font-size: 13px; color: var(--muted); font-weight: 500; }
+@media (min-width: 640px) { #doc-dialog { max-width: 720px; } }
+
 /* 더보기 */
 .more-row .avatar { border-radius: 12px; }
 
@@ -501,6 +524,12 @@ dialog::backdrop { background: var(--scrim); }
       <div id="notes-list"></div>
     </section>
 
+    <section class="view hidden" id="view-docs">
+      <input class="search" id="doc-search" type="search" placeholder="제목, 내용 검색">
+      <div class="filters" id="doc-cats"></div>
+      <div class="block"><div class="rows" id="docs-list"></div></div>
+    </section>
+
     <section class="view hidden" id="view-notices">
       <div class="block"><div id="notices-list"></div></div>
     </section>
@@ -542,6 +571,7 @@ dialog::backdrop { background: var(--scrim); }
         <div class="rows">
           <button class="row more-row" type="button" data-goto="budget"><span class="avatar" style="--c:#00b386">봉</span><span class="body"><span class="title">봉투 배정</span><span class="sub">달마다 봉투에 넣을 금액</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
           <button class="row more-row" type="button" data-goto="debt"><span class="avatar" style="--c:#12a5b8">빚</span><span class="body"><span class="title">부채</span><span class="sub">대출 잔액과 금리</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+          <button class="row more-row" type="button" data-goto="docs"><span class="avatar" style="--c:#3182f6">자</span><span class="body"><span class="title">자료</span><span class="sub">계약서, 평면도, 보증서</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
           <button class="row more-row" type="button" data-goto="notices"><span class="avatar" style="--c:#f59f00">공</span><span class="body"><span class="title">공지</span><span class="sub">둘이 함께 알아야 할 것</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
           <button class="row more-row" type="button" data-goto="notes"><span class="avatar" style="--c:#8b5cf6">메</span><span class="body"><span class="title">운영 메모</span><span class="sub">나만 보는 메모</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
         </div>
@@ -575,6 +605,8 @@ dialog::backdrop { background: var(--scrim); }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="14" rx="2.5"/><path d="M3.5 8l8.5 5.5L20.5 8"/></svg>봉투 배정</button>
       <button type="button" class="desk-only" data-view="debt">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>부채</button>
+      <button type="button" class="desk-only" data-view="docs">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M3.5 6.5a1.5 1.5 0 0 1 1.5-1.5h4.5l2 2.5H19a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 19.5H5A1.5 1.5 0 0 1 3.5 18z"/></svg>자료</button>
       <button type="button" class="desk-only" data-view="notices">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h3l6 4V6L7 10z"/><path d="M17 9a4 4 0 0 1 0 6"/></svg>공지</button>
       <button type="button" class="desk-only" data-view="notes">
@@ -699,6 +731,29 @@ dialog::backdrop { background: var(--scrim); }
   </form>
 </dialog>
 
+<dialog id="doc-dialog">
+  <form class="sheet" id="doc-form" method="dialog">
+    <h3 id="doc-dialog-title">자료 추가</h3>
+    <div class="seg" id="d-shared">
+      <button type="button" data-v="1" aria-pressed="true">함께 보기</button>
+      <button type="button" data-v="0" aria-pressed="false"><svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> 나만 보기</button>
+    </div>
+    <div class="form">
+      <label class="full">제목<input id="doc-title" required autocomplete="off" placeholder="예: 새집 전세임대 계약서"></label>
+      <label class="full">분류<input id="doc-cat" list="dl-doc-cats" autocomplete="off" required></label>
+      <label class="full">설명<textarea id="doc-body" style="min-height:110px" placeholder="계약 기간, 보증금, 관리사무소 연락처처럼 같이 적어 둘 내용"></textarea></label>
+    </div>
+    <div class="files-head"><span>파일</span><span id="doc-usage"></span></div>
+    <div class="files" id="doc-files"></div>
+    <div class="actions">
+      <button class="btn danger hidden" id="doc-delete" type="button">삭제</button>
+      <button class="btn" type="button" id="doc-cancel">닫기</button>
+      <button class="btn primary" type="submit">저장</button>
+    </div>
+  </form>
+</dialog>
+
+<datalist id="dl-doc-cats"></datalist>
 <datalist id="dl-sections"></datalist>
 <datalist id="dl-pay"></datalist>
 <datalist id="dl-cat"></datalist>
@@ -765,6 +820,11 @@ const state = {
   notes: [],
   notices: [],
   editingMemo: null,
+  docs: [],
+  docFiles: [],
+  docFilter: { q: '', cat: '' },
+  editingDoc: null,
+  docShared: true,
 };
 
 const TOGETHER = { email: null, display_name: '함께', color: '#8b5cf6' };
@@ -824,7 +884,7 @@ async function start() {
   $('#me-email').textContent = session.user.email;
   await loadStatic();
   await loadPrivate();
-  await Promise.all([loadMonth(), loadChores(), loadNotices()]);
+  await Promise.all([loadMonth(), loadChores(), loadNotices(), loadDocs()]);
   watchChanges();
 }
 
@@ -1188,9 +1248,9 @@ document.addEventListener('click', e => {
 
 // 이동 ---------------------------------------------------------------
 
-const VIEW_TITLES = { debt: '부채', notes: '운영 메모', notices: '공지', chores: '집안일', more: '더보기' };
-const TAB_OF = { budget: 'more', debt: 'more', notes: 'more', notices: 'more' };
-const FAB_LABEL = { home: '기록하기', tx: '기록하기', schedule: '일정 추가', chores: '집안일 추가', notes: '메모 추가', notices: '공지 쓰기' };
+const VIEW_TITLES = { debt: '부채', notes: '운영 메모', notices: '공지', docs: '자료', chores: '집안일', more: '더보기' };
+const TAB_OF = { budget: 'more', debt: 'more', notes: 'more', notices: 'more', docs: 'more' };
+const FAB_LABEL = { home: '기록하기', tx: '기록하기', schedule: '일정 추가', chores: '집안일 추가', notes: '메모 추가', notices: '공지 쓰기', docs: '자료 추가' };
 
 function go(view) {
   state.view = view;
@@ -1315,6 +1375,7 @@ $('#add-tx').addEventListener('click', () => {
   if (state.view === 'schedule') openEvent(null);
   else if (state.view === 'notes') openMemo('note', null);
   else if (state.view === 'notices') openMemo('notice', null);
+  else if (state.view === 'docs') openDoc(null);
   else if (state.view === 'chores') openChore(null);
   else openTx(null);
 });
@@ -1784,6 +1845,199 @@ for (const dlg of $$('dialog')) {
   dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
 }
 
+// 자료 ---------------------------------------------------------------
+
+const DOC_CATS = ['집·이사', '금융', '보험', '가전·보증서', '건강', '기타'];
+const DOC_COLORS = { '집·이사': '#00b386', '금융': '#3182f6', '보험': '#8b5cf6', '가전·보증서': '#ff8a3d', '건강': '#ff5c8a', '기타': '#7a8794' };
+const fileSize = n => n >= 1048576 ? (n / 1048576).toFixed(1) + 'MB' : Math.max(1, Math.round(n / 1024)) + 'KB';
+const fileExt = name => (name.match(/\.([a-z0-9]{1,8})$/i)?.[1] || '').toLowerCase();
+
+async function loadDocs() {
+  const [docs, files] = await Promise.all([
+    sb.from('docs').select('*').order('updated_at', { ascending: false }),
+    sb.from('doc_files').select('*').order('created_at'),
+  ]);
+  for (const r of [docs, files]) if (r.error) return fail(r.error);
+  state.docs = docs.data;
+  state.docFiles = files.data;
+  renderDocs();
+  if (state.editingDoc && $('#doc-dialog').open) renderDocFiles();
+}
+
+function renderDocs() {
+  const cats = [...new Set([...DOC_CATS, ...state.docs.map(d => d.category)])];
+  fillDatalist('#dl-doc-cats', cats);
+  const used = cats.filter(c => state.docs.some(d => d.category === c));
+  $('#doc-cats').innerHTML = ['', ...used].map(c =>
+    `<button class="chip" type="button" data-cat="${esc(c)}" aria-pressed="${state.docFilter.cat === c}">${c ? esc(c) : '전체'}</button>`).join('');
+  const needle = state.docFilter.q.trim().toLowerCase();
+  const list = state.docs.filter(d =>
+    (!state.docFilter.cat || d.category === state.docFilter.cat) &&
+    (!needle || `${d.title} ${d.body || ''} ${d.category}`.toLowerCase().includes(needle)));
+  $('#docs-list').innerHTML = list.map(d => {
+    const n = state.docFiles.filter(f => f.doc_id === d.id).length;
+    const sub = [d.category, n ? `파일 ${n}개` : '파일 없음', mmdd(d.updated_at.slice(0, 10))].join(' · ');
+    return `<button class="row" type="button" data-doc="${d.id}">
+      <span class="avatar" style="--c:${DOC_COLORS[d.category] || '#7a8794'}">${esc(d.category.slice(0, 1))}</span>
+      <span class="body"><span class="title">${esc(d.title)}${d.shared ? '' : ` <span class="tag lock-tag">${LOCK_SVG}</span>`}</span><span class="sub">${esc(sub)}</span></span>
+      ${ICONS.chev}</button>`;
+  }).join('') || (state.docs.length ? '<div class="empty">찾는 자료가 없어요</div>'
+    : '<div class="placeholder"><b>아직 올린 자료가 없어요</b>집 계약서, 평면도, 보증서처럼 자주 찾는 걸 올려 두세요</div>');
+}
+const LOCK_SVG = '<svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+
+$('#doc-search').addEventListener('input', e => { state.docFilter.q = e.target.value; renderDocs(); });
+$('#doc-cats').addEventListener('click', e => {
+  const c = e.target.closest('[data-cat]');
+  if (!c) return;
+  state.docFilter.cat = c.dataset.cat;
+  renderDocs();
+});
+$('#docs-list').addEventListener('click', e => {
+  const id = e.target.closest('[data-doc]')?.dataset.doc;
+  if (id) openDoc(state.docs.find(d => d.id === id));
+});
+
+function setDocShared(v) {
+  state.docShared = v;
+  $$('#d-shared button').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.v === '1') === v)));
+}
+$('#d-shared').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  const doc = state.editingDoc;
+  if (doc && doc.owner !== state.me.email && b.dataset.v === '0') return toast('상대가 만든 자료는 나만 보기로 바꿀 수 없어요');
+  setDocShared(b.dataset.v === '1');
+});
+
+function openDoc(doc) {
+  state.editingDoc = doc || null;
+  $('#doc-dialog-title').textContent = doc ? '자료' : '자료 추가';
+  $('#doc-delete').classList.toggle('hidden', !doc);
+  $('#doc-title').value = doc?.title || '';
+  $('#doc-cat').value = doc?.category || state.docFilter.cat || '집·이사';
+  $('#doc-body').value = doc?.body || '';
+  setDocShared(doc ? doc.shared : true);
+  renderDocFiles();
+  $('#doc-dialog').showModal();
+  if (!doc) $('#doc-title').focus();
+}
+
+async function renderDocFiles() {
+  const doc = state.editingDoc;
+  const files = doc ? state.docFiles.filter(f => f.doc_id === doc.id) : [];
+  const total = files.reduce((a, f) => a + Number(f.size || 0), 0);
+  $('#doc-usage').textContent = files.length ? `${files.length}개 · ${fileSize(total)}` : '';
+  let urls = {};
+  if (files.length) {
+    const { data } = await sb.storage.from('docs').createSignedUrls(files.map(f => f.path), 600);
+    urls = Object.fromEntries((data || []).map(u => [u.path, u.signedUrl]));
+  }
+  $('#doc-files').innerHTML = files.map(f => {
+    const url = urls[f.path] || '#';
+    const isImg = (f.mime || '').startsWith('image/');
+    return `<a class="file" href="${esc(url)}" target="_blank" rel="noopener">
+      <span class="thumb">${isImg ? `<img src="${esc(url)}" alt="" loading="lazy">` : esc(fileExt(f.name).toUpperCase() || '파일')}</span>
+      <span class="fname">${esc(f.name)}</span><span class="fsize num">${f.size ? fileSize(f.size) : ''}</span>
+      <button class="x" type="button" data-file-del="${f.id}" aria-label="${esc(f.name)} 지우기">×</button>
+    </a>`;
+  }).join('') + `<label class="upload" id="doc-drop"><input type="file" id="doc-input" multiple>
+      <span>+ 파일 올리기<br><small>PDF, 사진 등 · 50MB까지</small></span></label>`;
+}
+
+function docRow() {
+  return {
+    title: $('#doc-title').value.trim(),
+    category: $('#doc-cat').value.trim() || '기타',
+    body: $('#doc-body').value.trim() || null,
+    shared: state.docShared,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+async function saveDoc() {
+  const row = docRow();
+  if (!row.title) { toast('제목을 먼저 적어 주세요'); $('#doc-title').focus(); return null; }
+  if (state.editingDoc) {
+    const { error } = await sb.from('docs').update(row).eq('id', state.editingDoc.id);
+    if (error) { fail(error); return null; }
+    Object.assign(state.editingDoc, row);
+    return state.editingDoc;
+  }
+  const { data, error } = await sb.from('docs').insert({ ...row, owner: state.me.email }).select('*').single();
+  if (error) { fail(error); return null; }
+  state.editingDoc = data;
+  state.docs.unshift(data);
+  $('#doc-dialog-title').textContent = '자료';
+  $('#doc-delete').classList.remove('hidden');
+  return data;
+}
+
+async function uploadFiles(fileList) {
+  const files = [...fileList];
+  if (!files.length) return;
+  const doc = await saveDoc();
+  if (!doc) return;
+  const tooBig = files.filter(f => f.size > 52428800);
+  if (tooBig.length) toast(`50MB가 넘는 파일은 빼고 올려요: ${tooBig.map(f => f.name).join(', ')}`);
+  let done = 0;
+  for (const f of files.filter(f => f.size <= 52428800)) {
+    toast(`올리는 중… ${done + 1}/${files.length}`);
+    const ext = fileExt(f.name);
+    const path = `${doc.id}/${crypto.randomUUID()}${ext ? '.' + ext : ''}`;
+    const up = await sb.storage.from('docs').upload(path, f, { contentType: f.type || undefined });
+    if (up.error) { fail(up.error); continue; }
+    const { error } = await sb.from('doc_files').insert({ doc_id: doc.id, path, name: f.name, size: f.size, mime: f.type || null });
+    if (error) { fail(error); continue; }
+    done++;
+  }
+  if (done) toast(`파일 ${done}개를 올렸어요`);
+  await loadDocs();
+  renderDocFiles();
+}
+
+$('#doc-files').addEventListener('change', e => { if (e.target.id === 'doc-input') uploadFiles(e.target.files); });
+$('#doc-files').addEventListener('dragover', e => { e.preventDefault(); $('#doc-drop')?.classList.add('drag'); });
+$('#doc-files').addEventListener('dragleave', () => $('#doc-drop')?.classList.remove('drag'));
+$('#doc-files').addEventListener('drop', e => { e.preventDefault(); $('#doc-drop')?.classList.remove('drag'); uploadFiles(e.dataTransfer.files); });
+$('#doc-files').addEventListener('click', async e => {
+  const id = e.target.closest('[data-file-del]')?.dataset.fileDel;
+  if (!id) return;
+  e.preventDefault();
+  const f = state.docFiles.find(x => x.id === id);
+  if (!f || !confirm(`‘${f.name}’ 파일을 지울까요?`)) return;
+  const rm = await sb.storage.from('docs').remove([f.path]);
+  if (rm.error) return fail(rm.error);
+  const { error } = await sb.from('doc_files').delete().eq('id', f.id);
+  if (error) return fail(error);
+  toast('파일을 지웠어요');
+  await loadDocs();
+  renderDocFiles();
+});
+
+$('#doc-cancel').addEventListener('click', () => $('#doc-dialog').close());
+$('#doc-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!(await saveDoc())) return;
+  $('#doc-dialog').close();
+  toast('저장했어요');
+  loadDocs();
+});
+$('#doc-delete').addEventListener('click', async () => {
+  const doc = state.editingDoc;
+  const files = state.docFiles.filter(f => f.doc_id === doc?.id);
+  if (!doc || !confirm(`‘${doc.title}’ 자료와 파일 ${files.length}개를 모두 지울까요?`)) return;
+  if (files.length) {
+    const rm = await sb.storage.from('docs').remove(files.map(f => f.path));
+    if (rm.error) return fail(rm.error);
+  }
+  const { error } = await sb.from('docs').delete().eq('id', doc.id);
+  if (error) return fail(error);
+  $('#doc-dialog').close();
+  toast('지웠어요');
+  loadDocs();
+});
+
 // 자동 갱신 ------------------------------------------------------------
 // 데이터: Supabase Realtime으로 변경을 받고, 놓친 경우를 위해 1분마다 한 번 더 확인한다.
 // 화면: 이 페이지 파일이 다시 배포되면 알아채고 새로고침한다.
@@ -1794,7 +2048,7 @@ let pending = { month: false, chores: false, statics: false };
 let refreshTimer;
 
 function busy() {
-  return !!document.querySelector('dialog[open]') || !!document.activeElement?.matches('.alloc, #expected-income, #tx-search');
+  return !!document.querySelector('dialog[open]:not(#doc-dialog)') || !!document.activeElement?.matches('.alloc, #expected-income, #tx-search');
 }
 
 function scheduleRefresh(table) {
@@ -1803,6 +2057,7 @@ function scheduleRefresh(table) {
   if (table === 'settings' || table === 'debts') pending.statics = true;
   if (!table || table === 'private_notes') pending.private = true;
   if (!table || table === 'notices') pending.notices = true;
+  if (!table || table === 'docs' || table === 'doc_files') pending.docs = true;
   clearTimeout(refreshTimer);
   refreshTimer = setTimeout(flushRefresh, 400);
 }
@@ -1814,7 +2069,7 @@ async function flushRefresh() {
   pending = { month: false, chores: false, statics: false };
   if (job.statics) await loadStatic();
   if (job.private) { await loadPrivate(); job.month = job.chores = true; }
-  await Promise.all([job.month && loadMonth(), job.chores && loadChores(), job.notices && loadNotices(),
+  await Promise.all([job.month && loadMonth(), job.chores && loadChores(), job.notices && loadNotices(), job.docs && loadDocs(),
     state.view === 'notes' && renderNotes()]);
 }
 

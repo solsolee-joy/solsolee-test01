@@ -25,6 +25,7 @@
 | `chores` / `chore_logs` | 집안일과 완료 기록 |
 | `private_notes` | 나만 보는 메모 (작성자만 접근) |
 | `notices` | 함께 보는 공지 |
+| `docs` / `doc_files` | 자료 페이지와 첨부 파일 (Storage 버킷 `docs`) |
 
 뷰: `monthly_summary`(월 수입·지출, 일회성 제외 수지, 검토 필요 건수), `monthly_envelope_summary`(봉투별 사용액과 남은 금액)
 
@@ -54,6 +55,11 @@
   - `notes`(운영 메모)는 `owner` 열을 추가해 작성자만 보게 바꿈. 기존 28개는 새별 소유
   - `notices`: 둘이 함께 보는 공지. `pinned`면 홈 맨 위에 나온다
   - 주의: 일정·거래·집안일의 본문과 `memo`는 두 사람 모두 본다. 상대에게 숨길 내용은 `private_notes`에만 쓴다
+- 2026-10-21 자료 보관(`docs`, `doc_files`) 추가. 파일은 비공개 Storage 버킷 `docs/{doc_id}/{uuid}.{ext}`
+  - 페이지마다 함께 보기/나만 보기. Storage 접근도 `can_see_doc()`로 같은 규칙을 따른다
+  - 파일 링크는 10분짜리 서명 URL. 파일 하나 50MB까지
+  - 원본 보관소로 쓰지 말 것: 무료 플랜은 백업 다운로드가 없다. 원본은 구글 드라이브 등에도 둔다
+- 달력은 월요일 시작
 - 남은 일: 봉투 배정액 확정
 
 ## 구글 시트에서 옮길 때 정리한 것
