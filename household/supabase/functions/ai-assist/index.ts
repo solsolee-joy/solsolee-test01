@@ -46,7 +46,13 @@ Deno.serve(async req => {
 async function ask(system: string, user: string) {
   const res = await fetch(`${BASE_URL}/chat/completions`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${Deno.env.get('OPENCODE_API_KEY')}`, 'Content-Type': 'application/json' },
+    headers: {
+      Authorization: `Bearer ${Deno.env.get('OPENCODE_API_KEY')}`,
+      'Content-Type': 'application/json',
+      // OpenCode Go는 요청마다 세션 번호와 앱 이름을 요구한다. 정리 한 번이 대화 하나다
+      'x-opencode-session': crypto.randomUUID(),
+      'User-Agent': 'two-clocks-home/1.0',
+    },
     body: JSON.stringify({
       model: MODEL,
       temperature: 0.1,
