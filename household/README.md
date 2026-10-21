@@ -20,6 +20,9 @@
 | `rules` | 키워드별 분류 기본값 |
 | `notes` | 운영기준 (목표, 보호지출, 소득, 계좌 흐름) |
 | `members` | 접근 허용 이메일 |
+| `settings` | 예상 월수입 등 설정 |
+| `events` | 일정 (owner null = 함께) |
+| `chores` / `chore_logs` | 집안일과 완료 기록 |
 
 뷰: `monthly_summary`(월 수입·지출, 일회성 제외 수지, 검토 필요 건수), `monthly_envelope_summary`(봉투별 사용액과 남은 금액)
 
@@ -41,7 +44,10 @@
   - 주소: https://solsolee-joy.github.io/solsolee-test01/household/
   - 로그인은 이메일 링크(Supabase Auth). Supabase 대시보드 Authentication → URL Configuration에서
     Site URL과 Redirect URLs에 위 주소를 넣어야 링크가 이 페이지로 돌아온다
-- 남은 일: 봉투 배정액 확정, 집안일 탭
+- 2026-10-21 일정(`events`)과 집안일(`chores`, `chore_logs`) 추가. 탭은 홈·내역·일정·집안일·더보기
+  - 일정 owner가 null이면 함께. 토요일은 남편 쉬는 날로 달력에 표시
+  - 집안일은 완료하면 기록이 남고 반복 주기만큼 다음 날짜가 밀린다
+- 남은 일: 봉투 배정액 확정
 
 ## 구글 시트에서 옮길 때 정리한 것
 

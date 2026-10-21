@@ -281,8 +281,49 @@ dialog::backdrop { background: var(--scrim); }
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-.placeholder { text-align: center; color: var(--muted); padding: 40px 16px; }
-.placeholder b { display: block; color: var(--text); font-size: 18px; margin-bottom: 6px; }
+.me { font-size: 14px; font-weight: 600; padding: 6px 12px; border-radius: 999px; color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
+
+/* 일정 */
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.cal .dow { font-size: 12px; color: var(--muted); padding: 4px 0 8px; font-weight: 500; }
+.cal .dow.sat, .cal .day.sat .d { color: var(--accent); }
+.cal .dow.sun, .cal .day.sun .d { color: var(--minus); }
+.cal .day {
+  border: 0; background: none; padding: 6px 0 8px; border-radius: 12px; min-height: 52px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.cal .day.sat { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.cal .day.out { visibility: hidden; }
+.cal .day .d { font-size: 15px; font-weight: 500; width: 30px; height: 30px; line-height: 30px; border-radius: 50%; }
+.cal .day.today .d { background: var(--text); color: var(--surface) !important; font-weight: 700; }
+.cal .day[aria-pressed="true"] { background: var(--fill); }
+.cal .dots { display: flex; gap: 3px; height: 6px; }
+.cal .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
+.legend { display: flex; gap: 14px; justify-content: center; font-size: 13px; color: var(--muted); margin-top: 12px; }
+.legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 5px; vertical-align: 1px; }
+.time { font-size: 13px; font-weight: 600; color: var(--text-2); width: 44px; flex-shrink: 0; text-align: center; }
+.who-bar { width: 4px; align-self: stretch; border-radius: 4px; background: var(--c); flex-shrink: 0; }
+.sat-note { font-size: 13px; color: var(--accent); background: var(--accent-soft); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+
+/* 집안일 */
+.check-btn {
+  width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--fill-strong); background: none; flex-shrink: 0;
+  display: grid; place-items: center; color: transparent; padding: 0;
+}
+.check-btn:hover { border-color: var(--accent); color: var(--accent); }
+.check-btn svg { width: 16px; height: 16px; }
+.due { font-size: 13px; font-weight: 600; color: var(--muted); }
+.due.late { color: var(--minus); }
+.due.today { color: var(--accent); }
+.chore-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; }
+.chore-row + .chore-row { border-top: 1px solid var(--line); }
+.chore-row .open { flex: 1; min-width: 0; border: 0; background: none; text-align: left; padding: 0; }
+
+/* 더보기 */
+.more-row .avatar { border-radius: 12px; }
+
+.placeholder { text-align: center; color: var(--muted); padding: 32px 16px; font-size: 15px; }
+.placeholder b { display: block; color: var(--text); font-size: 17px; margin-bottom: 4px; }
 </style>
 </head>
 <body>
@@ -308,12 +349,13 @@ dialog::backdrop { background: var(--scrim); }
         <button type="button" data-step="1" aria-label="다음 달"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
       <h1 class="view-title hidden" id="view-title"></h1>
-      <button class="text-btn" id="logout" type="button">로그아웃</button>
+      <span class="me hidden" id="me"></span>
     </div>
   </header>
 
   <main class="wrap">
     <section class="view" id="view-home">
+      <div class="block" id="today-block"></div>
       <div class="block hero" id="hero"></div>
       <div class="block">
         <div class="rows" id="summary-rows"></div>
@@ -364,13 +406,54 @@ dialog::backdrop { background: var(--scrim); }
       <div id="notes-list"></div>
     </section>
 
+    <section class="view hidden" id="view-schedule">
+      <div class="block">
+        <div class="cal" id="cal"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="block">
+        <div class="block-head"><h2 id="day-title"></h2></div>
+        <div id="day-events"></div>
+      </div>
+      <div class="block">
+        <div class="block-head"><h2>이번 달 토요일</h2><span class="aside">남편 쉬는 날</span></div>
+        <div class="rows" id="saturdays"></div>
+      </div>
+    </section>
+
     <section class="view hidden" id="view-chores">
-      <div class="block placeholder"><b>집안일</b>준비 중이에요. 가계부가 자리 잡으면 여기에 붙일게요.</div>
+      <div class="block">
+        <div class="block-head"><h2>오늘까지</h2><span class="aside num" id="chores-due-count"></span></div>
+        <div id="chores-due"></div>
+      </div>
+      <div class="block">
+        <div class="block-head"><h2>곧 할 일</h2></div>
+        <div id="chores-soon"></div>
+      </div>
+      <div class="block">
+        <div class="block-head"><h2>최근에 한 일</h2></div>
+        <div class="rows" id="chore-logs"></div>
+      </div>
+    </section>
+
+    <section class="view hidden" id="view-more">
+      <div class="block">
+        <div class="rows">
+          <button class="row more-row" type="button" data-goto="budget"><span class="avatar" style="--c:#00b386">봉</span><span class="body"><span class="title">봉투 배정</span><span class="sub">달마다 봉투에 넣을 금액</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+          <button class="row more-row" type="button" data-goto="debt"><span class="avatar" style="--c:#12a5b8">빚</span><span class="body"><span class="title">부채</span><span class="sub">대출 잔액과 금리</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+          <button class="row more-row" type="button" data-goto="notes"><span class="avatar" style="--c:#8b5cf6">메</span><span class="body"><span class="title">운영 메모</span><span class="sub">목표, 보호지출, 소득, 계좌 흐름</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+        </div>
+      </div>
+      <div class="block">
+        <div class="rows">
+          <button class="row" type="button" id="logout"><span class="body"><span class="title" style="color:var(--minus)">로그아웃</span><span class="sub" id="me-email"></span></span></button>
+        </div>
+      </div>
     </section>
   </main>
 
   <button class="fab" id="add-tx" type="button">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>기록하기
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span id="fab-label">기록하기</span>
   </button>
 
   <nav class="tabs">
@@ -379,14 +462,12 @@ dialog::backdrop { background: var(--scrim); }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M3.5 10.2 12 3.5l8.5 6.7V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z"/></svg>홈</button>
       <button type="button" data-view="tx">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>내역</button>
-      <button type="button" data-view="budget">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="14" rx="2.5"/><path d="M3.5 8l8.5 5.5L20.5 8"/></svg>봉투</button>
-      <button type="button" data-view="debt">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>부채</button>
-      <button type="button" data-view="notes">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7" stroke-linecap="round"/></svg>메모</button>
+      <button type="button" data-view="schedule">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke-linecap="round"/></svg>일정</button>
       <button type="button" data-view="chores">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>집안일</button>
+      <button type="button" data-view="more">
+        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5.5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18.5" cy="12" r="1.8"/></svg>더보기</button>
     </div>
   </nav>
 </div>
@@ -444,6 +525,48 @@ dialog::backdrop { background: var(--scrim); }
   </form>
 </dialog>
 
+<dialog id="event-dialog">
+  <form class="sheet" id="event-form" method="dialog">
+    <h3 id="event-dialog-title">일정 추가</h3>
+    <div class="seg" id="e-owner"></div>
+    <div class="form">
+      <label class="full">무슨 일<input id="e-title" required autocomplete="off" placeholder="예: 대학 동기 저녁 약속"></label>
+      <label class="full">날짜<input id="e-date" type="date" required></label>
+      <div class="hint" id="e-hint"></div>
+      <label>시작<input id="e-start" type="time"></label>
+      <label>끝<input id="e-end" type="time"></label>
+      <label class="full">장소<input id="e-place" autocomplete="off"></label>
+      <label class="full">메모<textarea id="e-memo"></textarea></label>
+    </div>
+    <div class="actions">
+      <button class="btn danger hidden" id="event-delete" type="button">삭제</button>
+      <button class="btn" type="button" id="event-cancel">닫기</button>
+      <button class="btn primary" type="submit">저장</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="chore-dialog">
+  <form class="sheet" id="chore-form" method="dialog">
+    <h3 id="chore-dialog-title">집안일 추가</h3>
+    <div class="seg" id="c-assignee"></div>
+    <div class="form">
+      <label class="full">할 일<input id="c-title" required autocomplete="off" placeholder="예: 분리수거"></label>
+      <label>얼마나 자주<select id="c-repeat">
+        <option value="">한 번만</option><option value="1">매일</option><option value="2">2일마다</option>
+        <option value="3">3일마다</option><option value="7">매주</option><option value="14">2주마다</option>
+        <option value="30">한 달마다</option></select></label>
+      <label>다음에 할 날<input id="c-due" type="date" required></label>
+      <label class="full">메모<textarea id="c-memo"></textarea></label>
+    </div>
+    <div class="actions">
+      <button class="btn danger hidden" id="chore-delete" type="button">삭제</button>
+      <button class="btn" type="button" id="chore-cancel">닫기</button>
+      <button class="btn primary" type="submit">저장</button>
+    </div>
+  </form>
+</dialog>
+
 <datalist id="dl-pay"></datalist>
 <datalist id="dl-cat"></datalist>
 <datalist id="dl-sub"></datalist>
@@ -495,7 +618,22 @@ const state = {
   editing: null,
   formType: '지출',
   expectedIncome: 0,
+  members: [],
+  me: null,
+  events: [],
+  chores: [],
+  choreLogs: [],
+  selectedDay: null,
+  editingEvent: null,
+  editingChore: null,
+  eventOwner: null,
+  choreAssignee: null,
 };
+
+const TOGETHER = { email: null, display_name: '함께', color: '#8b5cf6' };
+const PERSON_COLORS = ['#ff6b9d', '#12a5b8'];
+const person = email => state.members.find(m => m.email === email) || TOGETHER;
+const nameOf = email => email ? person(email).display_name : '누구나';
 
 function monthRange(m) {
   const [y, mo] = m.split('-').map(Number);
@@ -539,8 +677,16 @@ async function start() {
   }
   $('#login').classList.add('hidden');
   $('#app').classList.remove('hidden');
+  const { data: members, error: mErr } = await sb.from('members').select('*').order('created_at');
+  if (mErr) return fail(mErr);
+  state.members = members.map((m, i) => ({ ...m, color: PERSON_COLORS[i % PERSON_COLORS.length] }));
+  state.me = person(session.user.email);
+  $('#me').textContent = state.me.display_name;
+  $('#me').style.setProperty('--c', state.me.color);
+  $('#me').classList.remove('hidden');
+  $('#me-email').textContent = session.user.email;
   await loadStatic();
-  await loadMonth();
+  await Promise.all([loadMonth(), loadChores()]);
 }
 
 function showLogin(msg = '', error = false) {
@@ -609,14 +755,16 @@ function fillDatalist(sel, values) {
 async function loadMonth() {
   $('#month-label').textContent = monthName(state.month);
   const { start, end } = monthRange(state.month);
-  const [tx, budgets, summary, debts] = await Promise.all([
+  const [tx, budgets, summary, debts, events] = await Promise.all([
     sb.from('transactions').select('*').gte('date', start).lt('date', end)
       .order('date', { ascending: false }).order('id', { ascending: false }),
     sb.from('monthly_envelope_summary').select('*').eq('month', start),
     sb.from('monthly_summary').select('*').eq('month', start).maybeSingle(),
     sb.from('debts').select('*'),
+    sb.from('events').select('*').gte('date', start).lt('date', end),
   ]);
-  for (const r of [tx, budgets, summary, debts]) if (r.error) return fail(r.error);
+  for (const r of [tx, budgets, summary, debts, events]) if (r.error) return fail(r.error);
+  state.events = events.data.sort(eventOrder);
   state.tx = tx.data.sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
   state.budgets = budgets.data;
   state.summary = summary.data;
@@ -627,6 +775,8 @@ async function loadMonth() {
 // 화면 ---------------------------------------------------------------
 
 function render() {
+  renderToday();
+  renderSchedule();
   renderHome();
   renderTx();
   renderBudget();
@@ -807,16 +957,20 @@ async function renderNotes() {
 
 // 이동 ---------------------------------------------------------------
 
-const VIEW_TITLES = { debt: '부채', notes: '메모', chores: '집안일' };
+const VIEW_TITLES = { debt: '부채', notes: '운영 메모', chores: '집안일', more: '더보기' };
+const TAB_OF = { budget: 'more', debt: 'more', notes: 'more' };
+const FAB_LABEL = { home: '기록하기', tx: '기록하기', schedule: '일정 추가', chores: '집안일 추가' };
 
 function go(view) {
   state.view = view;
   for (const s of $$('section.view')) s.classList.toggle('hidden', s.id !== 'view-' + view);
+  const tab = TAB_OF[view] || view;
   for (const b of $$('nav.tabs button')) {
-    if (b.dataset.view === view) b.setAttribute('aria-current', 'page');
+    if (b.dataset.view === tab) b.setAttribute('aria-current', 'page');
     else b.removeAttribute('aria-current');
   }
-  $('#add-tx').classList.toggle('hidden', !['home', 'tx'].includes(view));
+  $('#add-tx').classList.toggle('hidden', !FAB_LABEL[view]);
+  $('#fab-label').textContent = FAB_LABEL[view] || '';
   const fixedTitle = VIEW_TITLES[view];
   $('#month-picker').classList.toggle('hidden', !!fixedTitle);
   $('#view-title').classList.toggle('hidden', !fixedTitle);
@@ -924,7 +1078,15 @@ function openTx(t) {
   if (!t) $('#f-amount').focus();
 }
 
-$('#add-tx').addEventListener('click', () => openTx(null));
+$('#add-tx').addEventListener('click', () => {
+  if (state.view === 'schedule') openEvent(null);
+  else if (state.view === 'chores') openChore(null);
+  else openTx(null);
+});
+$('#view-more').addEventListener('click', e => {
+  const target = e.target.closest('[data-goto]')?.dataset.goto;
+  if (target) go(target);
+});
 $('#tx-cancel').addEventListener('click', () => $('#tx-dialog').close());
 
 async function nextId(date) {
@@ -1065,12 +1227,318 @@ $('#debt-form').addEventListener('submit', async e => {
   loadMonth();
 });
 
+// 일정 ---------------------------------------------------------------
+
+function eventOrder(a, b) {
+  return a.date.localeCompare(b.date) || (a.start_time || '').localeCompare(b.start_time || '');
+}
+const hhmm = t => t ? t.slice(0, 5) : '';
+const isSat = iso => new Date(iso + 'T00:00:00').getDay() === 6;
+
+function eventRow(ev, showDate = false) {
+  const p = person(ev.owner);
+  const time = ev.start_time ? hhmm(ev.start_time) : '종일';
+  const sub = [showDate ? `${mmdd(ev.date)} ${weekday(ev.date)}` : null, p.display_name,
+    ev.end_time ? `~${hhmm(ev.end_time)}` : null, ev.place].filter(Boolean).join(' · ');
+  return `<button class="row" type="button" data-event="${esc(ev.id)}">
+    <span class="who-bar" style="--c:${p.color}"></span>
+    <span class="time num">${time}</span>
+    <span class="body"><span class="title">${esc(ev.title)}</span><span class="sub">${esc(sub)}</span></span>
+  </button>`;
+}
+
+function renderSchedule() {
+  const { start } = monthRange(state.month);
+  const first = new Date(start + 'T00:00:00');
+  const days = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+  if (!state.selectedDay || state.selectedDay.slice(0, 7) !== state.month) {
+    state.selectedDay = today().slice(0, 7) === state.month ? today() : start;
+  }
+  const byDay = {};
+  for (const ev of state.events) (byDay[ev.date] ||= []).push(ev);
+  let html = '일월화수목금토'.split('').map((d, i) => `<div class="dow ${i === 6 ? 'sat' : i === 0 ? 'sun' : ''}">${d}</div>`).join('');
+  html += '<div class="day out"></div>'.repeat(first.getDay());
+  for (let d = 1; d <= days; d++) {
+    const iso = `${state.month}-${pad(d)}`;
+    const dow = (first.getDay() + d - 1) % 7;
+    const owners = [...new Set((byDay[iso] || []).map(ev => ev.owner))].slice(0, 3);
+    html += `<button class="day ${dow === 6 ? 'sat' : dow === 0 ? 'sun' : ''} ${iso === today() ? 'today' : ''}" type="button"
+      data-day="${iso}" aria-pressed="${iso === state.selectedDay}">
+      <span class="d num">${d}</span>
+      <span class="dots">${owners.map(o => `<i style="--c:${person(o).color}"></i>`).join('')}</span>
+    </button>`;
+  }
+  $('#cal').innerHTML = html;
+  $('#legend').innerHTML = [...state.members, TOGETHER].map(p => `<span style="--c:${p.color}">${esc(p.display_name)}</span>`).join('');
+
+  const sel = state.selectedDay;
+  $('#day-title').textContent = `${mmdd(sel)} ${weekday(sel)}요일`;
+  const list = byDay[sel] || [];
+  $('#day-events').innerHTML =
+    (isSat(sel) ? '<div class="sat-note">남편이 쉬는 토요일이에요. 약속을 잡으면 서로 알려 주세요.</div>' : '') +
+    (list.length ? `<div class="rows">${list.map(ev => eventRow(ev)).join('')}</div>` : '<div class="empty">일정이 없어요</div>');
+
+  const sats = [];
+  for (let d = 1; d <= days; d++) {
+    const iso = `${state.month}-${pad(d)}`;
+    if (isSat(iso)) sats.push(iso);
+  }
+  $('#saturdays').innerHTML = sats.map(iso => {
+    const evs = byDay[iso] || [];
+    const past = iso < today();
+    return `<button class="row" type="button" data-day-jump="${iso}" ${past ? 'style="opacity:.5"' : ''}>
+      <span class="time num">${mmdd(iso)}</span>
+      <span class="body"><span class="title">${evs.length ? esc(evs.map(e => e.title).join(', ')) : '비어 있음'}</span>
+        <span class="sub">${evs.length ? esc([...new Set(evs.map(e => person(e.owner).display_name))].join(', ')) : '둘이 같이 쉬는 날'}</span></span>
+    </button>`;
+  }).join('');
+}
+
+$('#cal').addEventListener('click', e => {
+  const day = e.target.closest('[data-day]')?.dataset.day;
+  if (!day) return;
+  state.selectedDay = day;
+  renderSchedule();
+});
+$('#saturdays').addEventListener('click', e => {
+  const day = e.target.closest('[data-day-jump]')?.dataset.dayJump;
+  if (!day) return;
+  state.selectedDay = day;
+  renderSchedule();
+  $('#day-title').scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+
+function renderOwnerSeg(sel, value, withTogether) {
+  const opts = [...state.members, ...(withTogether ? [TOGETHER] : [{ email: null, display_name: '누구나' }])];
+  $(sel).innerHTML = opts.map(p =>
+    `<button type="button" data-email="${p.email || ''}" aria-pressed="${(p.email || null) === value}">${esc(p.display_name)}</button>`).join('');
+}
+
+function syncEventHint() {
+  const d = $('#e-date').value;
+  $('#e-hint').textContent = d && isSat(d) ? '토요일이에요. 남편이 쉬는 날이라 함께 정하면 좋아요' : '';
+}
+
+function openEvent(ev) {
+  state.editingEvent = ev || null;
+  state.eventOwner = ev ? ev.owner : state.me?.email ?? null;
+  $('#event-dialog-title').textContent = ev ? '일정 고치기' : '일정 추가';
+  $('#event-delete').classList.toggle('hidden', !ev);
+  renderOwnerSeg('#e-owner', state.eventOwner, true);
+  $('#e-title').value = ev?.title || '';
+  $('#e-date').value = ev?.date || state.selectedDay || today();
+  $('#e-start').value = hhmm(ev?.start_time);
+  $('#e-end').value = hhmm(ev?.end_time);
+  $('#e-place').value = ev?.place || '';
+  $('#e-memo').value = ev?.memo || '';
+  syncEventHint();
+  $('#event-dialog').showModal();
+  if (!ev) $('#e-title').focus();
+}
+$('#e-owner').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  state.eventOwner = b.dataset.email || null;
+  renderOwnerSeg('#e-owner', state.eventOwner, true);
+});
+$('#e-date').addEventListener('input', syncEventHint);
+$('#event-cancel').addEventListener('click', () => $('#event-dialog').close());
+$('#event-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const row = {
+    owner: state.eventOwner,
+    title: $('#e-title').value.trim(),
+    date: $('#e-date').value,
+    start_time: $('#e-start').value || null,
+    end_time: $('#e-end').value || null,
+    place: $('#e-place').value.trim() || null,
+    memo: $('#e-memo').value.trim() || null,
+  };
+  const q = state.editingEvent
+    ? sb.from('events').update(row).eq('id', state.editingEvent.id)
+    : sb.from('events').insert(row);
+  const { error } = await q;
+  if (error) return fail(error);
+  $('#event-dialog').close();
+  toast('일정을 저장했어요');
+  state.month = row.date.slice(0, 7);
+  state.selectedDay = row.date;
+  loadMonth();
+  loadChores();
+});
+$('#event-delete').addEventListener('click', async () => {
+  const ev = state.editingEvent;
+  if (!ev || !confirm(`‘${ev.title}’ 일정을 지울까요?`)) return;
+  const { error } = await sb.from('events').delete().eq('id', ev.id);
+  if (error) return fail(error);
+  $('#event-dialog').close();
+  toast('지웠어요');
+  loadMonth();
+  loadChores();
+});
+document.addEventListener('click', e => {
+  const id = e.target.closest('[data-event]')?.dataset.event;
+  if (id) openEvent(state.events.find(ev => ev.id === id) || state.upcoming?.find(ev => ev.id === id));
+});
+
+// 집안일 -------------------------------------------------------------
+
+const daysBetween = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000);
+const addDays = (iso, n) => {
+  const d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+const REPEAT_LABEL = { 1: '매일', 7: '매주', 14: '2주마다', 30: '한 달마다' };
+const repeatLabel = n => n ? (REPEAT_LABEL[n] || `${n}일마다`) : '한 번만';
+
+async function loadChores() {
+  const [chores, logs, upcoming] = await Promise.all([
+    sb.from('chores').select('*').eq('active', true).order('due_on'),
+    sb.from('chore_logs').select('*, chores(title)').order('done_on', { ascending: false }).order('id', { ascending: false }).limit(15),
+    sb.from('events').select('*').gte('date', today()).lte('date', addDays(today(), 6)),
+  ]);
+  for (const r of [chores, logs, upcoming]) if (r.error) return fail(r.error);
+  state.chores = chores.data;
+  state.choreLogs = logs.data;
+  state.upcoming = upcoming.data.sort(eventOrder);
+  renderChores();
+  renderToday();
+}
+
+function choreRow(c) {
+  const diff = daysBetween(today(), c.due_on);
+  const due = diff < 0 ? `${-diff}일 지남` : diff === 0 ? '오늘' : diff === 1 ? '내일' : `${diff}일 뒤`;
+  const sub = [nameOf(c.assignee), repeatLabel(c.repeat_days)].join(' · ');
+  return `<div class="chore-row">
+    <button class="check-btn" type="button" data-done="${c.id}" aria-label="${esc(c.title)} 완료">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+    </button>
+    <button class="open" type="button" data-chore="${c.id}">
+      <span class="title" style="display:block;font-weight:500">${esc(c.title)}</span>
+      <span class="sub" style="display:block;font-size:13px;color:var(--muted)">${esc(sub)}</span>
+    </button>
+    <span class="due num ${diff < 0 ? 'late' : diff === 0 ? 'today' : ''}">${due}</span>
+  </div>`;
+}
+
+function renderChores() {
+  const t = today();
+  const due = state.chores.filter(c => c.due_on <= t);
+  const soon = state.chores.filter(c => c.due_on > t);
+  $('#chores-due-count').textContent = due.length ? `${due.length}개` : '';
+  $('#chores-due').innerHTML = due.map(choreRow).join('') ||
+    (state.chores.length ? '<div class="empty">오늘 할 일을 다 했어요</div>'
+      : '<div class="placeholder"><b>아직 등록한 집안일이 없어요</b>아래 ‘집안일 추가’로 분리수거, 청소 같은 일을 넣어 보세요</div>');
+  $('#chores-soon').innerHTML = soon.map(choreRow).join('') || '<div class="empty">예정된 일이 없어요</div>';
+  $('#chore-logs').innerHTML = state.choreLogs.map(l => {
+    const p = person(l.done_by);
+    return `<div class="row">
+      <span class="avatar" style="--c:${p.color}">${esc(p.display_name.slice(0, 1))}</span>
+      <span class="body"><span class="title">${esc(l.chores?.title || '지운 집안일')}</span><span class="sub">${esc(p.display_name)}</span></span>
+      <span class="due num">${mmdd(l.done_on)}</span>
+    </div>`;
+  }).join('') || '<div class="empty">아직 기록이 없어요</div>';
+}
+
+function renderToday() {
+  const t = today();
+  const events = (state.upcoming || []).filter(ev => ev.date === t);
+  const week = (state.upcoming || []).filter(ev => ev.date > t).slice(0, 3);
+  const due = state.chores.filter(c => c.due_on <= t);
+  const parts = [];
+  parts.push(`<div class="block-head"><h2>오늘 ${mmdd(t)} ${weekday(t)}요일</h2></div>`);
+  parts.push('<div class="rows">');
+  parts.push(events.map(ev => eventRow(ev)).join('') || '<div class="row"><span class="body"><span class="sub">오늘 일정은 없어요</span></span></div>');
+  parts.push(`<button class="row" type="button" data-goto-view="chores">
+    <span class="avatar" style="--c:${due.length ? 'var(--accent)' : 'var(--muted)'}">✓</span>
+    <span class="body"><span class="title">${due.length ? `집안일 ${due.length}개 남았어요` : '오늘 집안일 끝'}</span>
+      <span class="sub">${esc(due.slice(0, 3).map(c => c.title).join(', '))}</span></span>${ICONS.chev}</button>`);
+  if (week.length) parts.push(week.map(ev => eventRow(ev, true)).join(''));
+  parts.push('</div>');
+  $('#today-block').innerHTML = parts.join('');
+}
+$('#today-block').addEventListener('click', e => {
+  const v = e.target.closest('[data-goto-view]')?.dataset.gotoView;
+  if (v) go(v);
+});
+
+$('#view-chores').addEventListener('click', async e => {
+  const doneId = e.target.closest('[data-done]')?.dataset.done;
+  if (doneId) {
+    const c = state.chores.find(x => x.id === doneId);
+    const btn = e.target.closest('[data-done]');
+    btn.disabled = true;
+    const { error } = await sb.from('chore_logs').insert({ chore_id: c.id, done_on: today() });
+    if (error) { btn.disabled = false; return fail(error); }
+    const update = c.repeat_days ? { due_on: addDays(today(), c.repeat_days) } : { active: false };
+    const { error: e2 } = await sb.from('chores').update(update).eq('id', c.id);
+    if (e2) return fail(e2);
+    toast(c.repeat_days ? `잘했어요. 다음은 ${mmdd(update.due_on)}` : '잘했어요');
+    return loadChores();
+  }
+  const openId = e.target.closest('[data-chore]')?.dataset.chore;
+  if (openId) openChore(state.chores.find(x => x.id === openId));
+});
+
+function openChore(c) {
+  state.editingChore = c || null;
+  state.choreAssignee = c ? c.assignee : null;
+  $('#chore-dialog-title').textContent = c ? '집안일 고치기' : '집안일 추가';
+  $('#chore-delete').classList.toggle('hidden', !c);
+  renderOwnerSeg('#c-assignee', state.choreAssignee, false);
+  $('#c-title').value = c?.title || '';
+  $('#c-repeat').value = c?.repeat_days ? String(c.repeat_days) : (c ? '' : '7');
+  if (c?.repeat_days && !$('#c-repeat').value) {
+    $('#c-repeat').insertAdjacentHTML('beforeend', `<option value="${c.repeat_days}">${c.repeat_days}일마다</option>`);
+    $('#c-repeat').value = String(c.repeat_days);
+  }
+  $('#c-due').value = c?.due_on || today();
+  $('#c-memo').value = c?.memo || '';
+  $('#chore-dialog').showModal();
+  if (!c) $('#c-title').focus();
+}
+$('#c-assignee').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  state.choreAssignee = b.dataset.email || null;
+  renderOwnerSeg('#c-assignee', state.choreAssignee, false);
+});
+$('#chore-cancel').addEventListener('click', () => $('#chore-dialog').close());
+$('#chore-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const row = {
+    title: $('#c-title').value.trim(),
+    assignee: state.choreAssignee,
+    repeat_days: Number($('#c-repeat').value) || null,
+    due_on: $('#c-due').value,
+    memo: $('#c-memo').value.trim() || null,
+  };
+  const q = state.editingChore
+    ? sb.from('chores').update(row).eq('id', state.editingChore.id)
+    : sb.from('chores').insert(row);
+  const { error } = await q;
+  if (error) return fail(error);
+  $('#chore-dialog').close();
+  toast('저장했어요');
+  loadChores();
+});
+$('#chore-delete').addEventListener('click', async () => {
+  const c = state.editingChore;
+  if (!c || !confirm(`‘${c.title}’를 목록에서 지울까요? 했던 기록도 함께 지워져요.`)) return;
+  const { error } = await sb.from('chores').delete().eq('id', c.id);
+  if (error) return fail(error);
+  $('#chore-dialog').close();
+  toast('지웠어요');
+  loadChores();
+});
+
 for (const dlg of $$('dialog')) {
   dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
 }
 
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && !$('#app').classList.contains('hidden')) loadMonth();
+  if (document.visibilityState === 'visible' && !$('#app').classList.contains('hidden')) { loadMonth(); loadChores(); }
 });
 
 start().catch(fail);
