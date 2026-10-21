@@ -757,6 +757,8 @@ body {
         <button type="button" data-step="1" aria-label="다음 달"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
       <h1 class="view-title hidden" id="view-title"></h1>
+      <button class="text-btn showcase-btn" id="ai-open" type="button" title="아무렇게나 적으면 AI가 정리해요">
+        <span data-ic="memo"></span><span class="sc-label">그냥 적기</span></button>
       <button class="text-btn showcase-btn" id="showcase-toggle" type="button" aria-pressed="false" title="인스타 촬영용으로 금액을 가려요">
         <span data-ic="camera"></span><span class="sc-label">보여주기</span></button>
       <button class="me hidden" id="me" type="button" title="프로필 주민 고르기"></button>
@@ -1085,6 +1087,25 @@ body {
   </form>
 </dialog>
 
+<dialog id="ai-dialog">
+  <form class="sheet" id="ai-form" method="dialog">
+    <h3>그냥 적기</h3>
+    <div class="seg" id="ai-mode">
+      <button type="button" data-v="tx" aria-pressed="true">가계부</button>
+      <button type="button" data-v="doc" aria-pressed="false">자료</button>
+    </div>
+    <div class="form">
+      <label class="full">아무렇게나 적어 주세요<textarea id="ai-text" required maxlength="4000" style="min-height:140px"></textarea></label>
+      <div class="hint" id="ai-help"></div>
+    </div>
+    <div class="rows hidden" id="ai-drafts" style="margin-top:12px"></div>
+    <div id="ai-msg" class="msg"></div>
+    <div class="actions">
+      <button class="btn" type="button" id="ai-cancel">닫기</button>
+      <button class="btn primary" type="submit" id="ai-go">정리하기</button>
+    </div>
+  </form>
+</dialog>
 <dialog id="lightbox" aria-label="사진 크게 보기">
   <div class="lb-track" id="lb-track"></div>
   <button class="lb-nav prev" type="button" id="lb-prev" aria-label="이전 사진">‹</button>
@@ -1905,8 +1926,10 @@ $('#f-desc').addEventListener('input', () => {
   $('#f-hint').textContent = `‘${r.keyword}’ 규칙으로 채웠어요`;
 });
 
-function openTx(t) {
+// draft: '그냥 적기'에서 AI가 만든 새 기록 초안. 저장 전에 사람이 확인한다
+function openTx(t, draft) {
   state.editing = t || null;
+  state.txSource = draft ? 'AI 입력' : null;
   $('#tx-dialog-title').textContent = t ? '기록 고치기' : '기록하기';
   $('#tx-delete').classList.toggle('hidden', !t);
   $('#f-hint').textContent = '';
@@ -1924,9 +1947,24 @@ function openTx(t) {
   $('#f-private').value = t ? privateNote('transaction', t.id) : '';
   $('#f-review').checked = !!t?.needs_review;
   $('#f-oneoff').checked = !!t?.one_off;
+  if (draft) {
+    setFormType(draft.type);
+    $('#f-desc').value = draft.description;
+    $('#f-date').value = draft.date;
+    $('#f-amount').value = draft.amount ? fmtInput(draft.amount) : '';
+    $('#f-envelope').value = draft.envelope || '';
+    $('#f-pay').value = draft.payment_method || '';
+    $('#f-cat').value = draft.category || '';
+    $('#f-sub').value = draft.subcategory || '';
+    $('#f-debt').value = draft.debt_id || '';
+    $('#f-tags').value = draft.tags.join(', ');
+    $('#f-review').checked = draft.needs_review;
+    $('#f-oneoff').checked = draft.one_off;
+    $('#f-hint').textContent = draft.reason ? `AI가 채웠어요. 확인할 것: ${draft.reason}` : 'AI가 채웠어요. 맞는지 보고 저장해 주세요';
+  }
   syncDebtField();
   $('#tx-dialog').showModal();
-  if (!t) $('#f-amount').focus();
+  if (!t && !draft) $('#f-amount').focus();
 }
 
 $('#add-tx').addEventListener('click', () => {
@@ -1983,7 +2021,7 @@ $('#tx-form').addEventListener('submit', async e => {
     } else {
       const makeId = await nextId(row.date);
       for (let n = 1; n <= 5 && !id; n++) {
-        const { error } = await sb.from('transactions').insert({ ...row, id: makeId(n), source: '앱 입력' });
+        const { error } = await sb.from('transactions').insert({ ...row, id: makeId(n), source: state.txSource || '앱 입력' });
         if (!error) id = makeId(n);
         else if (error.code !== '23505') throw error;
       }
@@ -1992,6 +2030,7 @@ $('#tx-form').addEventListener('submit', async e => {
     await savePrivate('transaction', id, $('#f-private').value);
     $('#tx-dialog').close();
     toast('저장했어요');
+    if (state.aiOpen != null) { state.aiDrafts[state.aiOpen].saved = true; state.aiOpen = null; renderAiDrafts(); }
     if (row.date.slice(0, 7) !== state.month) state.month = row.date.slice(0, 7);
     await loadMonth();
   } catch (err) {
@@ -1999,6 +2038,83 @@ $('#tx-form').addEventListener('submit', async e => {
   } finally {
     btn.disabled = false;
   }
+});
+
+// 그냥 적기 ------------------------------------------------------------
+// 아무렇게나 적으면 AI(Edge Function ai-assist)가 기록·자료 초안을 만든다. 저장은 늘 사람이 확인하고 누른다
+
+const AI_HELP = {
+  tx: ['예: 어제 이마트 장보기 5만2천원 카드, 오늘 점심 김밥 4500원', '여러 건을 한 번에 적어도 돼요. 하나씩 확인하고 저장해요'],
+  doc: ['예: 카톡으로 받은 보험 안내, 관리사무소 전화번호, 가전 보증 기간', '붙여 넣으면 제목과 분류를 붙여 자료 한 페이지로 정리해요'],
+};
+function setAiMode(mode) {
+  state.aiMode = mode;
+  for (const b of $$('#ai-mode button')) b.setAttribute('aria-pressed', b.dataset.v === mode);
+  $('#ai-text').placeholder = AI_HELP[mode][0];
+  $('#ai-help').textContent = AI_HELP[mode][1];
+}
+function openAi() {
+  state.aiDrafts = [];
+  state.aiOpen = null;
+  $('#ai-text').value = '';
+  $('#ai-msg').textContent = '';
+  setAiMode(state.view === 'docs' ? 'doc' : 'tx');
+  renderAiDrafts();
+  $('#ai-dialog').showModal();
+  $('#ai-text').focus();
+}
+function renderAiDrafts() {
+  $('#ai-drafts').innerHTML = state.aiDrafts.map((d, i) => `
+    <button class="row" type="button" data-draft="${i}" ${d.saved ? 'disabled' : ''}>
+      <span class="body"><span class="title">${esc(d.description)}</span>
+        <span class="sub">${mmdd(d.date)} · ${esc(d.envelope || d.type)}${d.payment_method ? ' · ' + esc(d.payment_method) : ''}
+          <span class="tags">${d.saved ? '<span class="tag">저장함</span>' : d.needs_review ? '<span class="tag warn">확인</span>' : ''}</span></span></span>
+      <span class="end"><span class="amt num ${{ 수입: 'plus', 이동: 'move' }[d.type] || ''}">${{ 수입: '+', 지출: '−' }[d.type] || ''}${fmt(d.amount)}원</span></span>
+    </button>`).join('');
+  $('#ai-drafts').classList.toggle('hidden', !state.aiDrafts.length);
+  const left = state.aiDrafts.filter(d => !d.saved).length;
+  $('#ai-go').textContent = state.aiDrafts.length ? '다시 정리하기' : '정리하기';
+  if (state.aiDrafts.length) $('#ai-msg').textContent = left ? `${left}건이 남았어요. 하나씩 눌러 확인하고 저장해 주세요` : '모두 저장했어요';
+}
+$('#ai-open').addEventListener('click', openAi);
+$('#ai-cancel').addEventListener('click', () => $('#ai-dialog').close());
+$('#ai-mode').addEventListener('click', e => { if (e.target.dataset.v) setAiMode(e.target.dataset.v); });
+$('#ai-drafts').addEventListener('click', e => {
+  const i = e.target.closest('[data-draft]')?.dataset.draft;
+  if (i == null) return;
+  state.aiOpen = Number(i);
+  openTx(null, state.aiDrafts[i]);
+});
+$('#tx-dialog').addEventListener('close', () => { state.aiOpen = null; });
+$('#ai-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const text = $('#ai-text').value.trim();
+  if (!text) return;
+  const btn = $('#ai-go');
+  btn.disabled = true;
+  btn.textContent = '정리하는 중…';
+  $('#ai-msg').textContent = '';
+  const { data, error } = await sb.functions.invoke('ai-assist', { body: { mode: state.aiMode, text, today: today() } });
+  btn.disabled = false;
+  btn.textContent = '정리하기';
+  if (error) {
+    const body = await error.context?.json?.().catch(() => null);
+    $('#ai-msg').textContent = body?.error || '정리하지 못했어요. 잠시 뒤에 다시 해 주세요';
+    return;
+  }
+  if (state.aiMode === 'doc') {
+    $('#ai-dialog').close();
+    openDoc(null);
+    $('#doc-title').value = data.doc.title;
+    $('#doc-cat').value = data.doc.category;
+    $('#doc-body').value = data.doc.body;
+    toast('AI가 정리했어요. 확인하고 저장해 주세요');
+    return;
+  }
+  state.aiDrafts = data.items;
+  if (!data.items.length) $('#ai-msg').textContent = '거래를 찾지 못했어요. 금액이나 내용을 조금 더 적어 주세요';
+  renderAiDrafts();
+  if (data.items.length === 1) { state.aiOpen = 0; openTx(null, data.items[0]); }
 });
 
 $('#tx-delete').addEventListener('click', async () => {
