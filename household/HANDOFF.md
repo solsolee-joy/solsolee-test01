@@ -9,15 +9,11 @@
 - 데이터: Supabase 프로젝트 `twrcgrflwvwljdyhxuwr`. 스키마는 `supabase/migrations/`에 순서대로 있고 전부 적용됨
 - 디자인: 크림·월넛·올리브·앰버 팔레트, 온글잎 박다현체 제목, 손그림 테두리, 동숲 아이콘. 자세한 결정은 README 진행 상황
 
-## 확인 안 된 것
+## 확인된 것
 
-- 예전에 일정으로 넣었던 월세 12건과 '월급날' 일정 삭제. 지금은 `recurring`과 월급날 계산으로 달력에 나오므로 중복이다.
-  MCP로 지우다 시간 초과가 나서 아래 SQL을 대시보드에서 돌리도록 넘겼는데, 돌렸는지 확인 못 했다
-  ```sql
-  select id, title, starts_on from public.events where title like '%월세%' or title = '월급날';
-  ```
-  결과가 남아 있으면 `delete from public.events where ...`로 정리
-- 이관용 `import` 스키마와 `http` 확장도 아직 남아 있다 (README 참고)
+- 2026-10-21 로컬 세션: 예전 월세·월급날 일정은 지워져 있다. `events`에 제목이 '월세'·'월급'을 포함하는 행 0건 (전체 8건).
+  날짜 열 이름은 `starts_on`이 아니라 `date`다
+- 2026-10-21 로컬 세션: 이관용 `import` 스키마와 `http` 확장을 지웠다. 거래 253건 그대로
 
 ## 남은 일
 
