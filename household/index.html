@@ -7,24 +7,27 @@
 <meta name="theme-color" content="#f3ece1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1d1814" media="(prefers-color-scheme: dark)">
 <title>two-clocks-home dashboard</title>
+<!-- 홈 화면에 추가하면 '우리집' 아이콘으로 열리고, 바로 메모 남기기 창이 뜬다 -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="우리집">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- 예비 글꼴은 프리텐다드 가변 글꼴 하나만. 쓰는 글자 조각만 받는다 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;600;700&display=swap">
 <style>
-/* 온글잎 박다현체 (OFL, 눈누 웹폰트). 불러오기 전이나 실패하면 고운돋움으로 보인다 */
+/* 온글잎 박다현체 (OFL, fonts/LICENSE.md). 사이트에 같이 둔다. 불러오기 전이나 실패하면 프리텐다드로 보인다 */
 @font-face {
   font-family: "OngleipParkDahyeon";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2411-3@1.0/Ownglyph_ParkDaHyun.woff2") format("woff2");
+  src: url("fonts/Ownglyph_ParkDaHyun.woff2") format("woff2");
   font-weight: normal;
   font-display: swap;
 }
-/* 이서윤체 (눈누 웹폰트). 본문과 숫자. 불러오기 전이나 실패하면 프리텐다드로 보인다 */
+/* 이서윤체 (서버 탑재 허용, fonts/LICENSE.md). 본문과 숫자. 불러오기 전이나 실패하면 프리텐다드로 보인다 */
 @font-face {
   font-family: "IsYun";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2202-2@1.0/LeeSeoyun.woff") format("woff");
+  src: url("fonts/LeeSeoyun.woff") format("woff");
   font-weight: normal;
   font-display: swap;
 }
@@ -52,9 +55,9 @@
   --s-expense: #c0762e;
   --s-debt: #5f7a45;
   --shadow: 0 1px 0 rgba(90, 60, 30, .06), 0 6px 18px rgba(90, 60, 30, .05);
-  --f-title: "OngleipParkDahyeon", "Gowun Dodum", "Pretendard Variable", Pretendard, "Noto Sans KR", sans-serif;
+  --f-title: "OngleipParkDahyeon", "Pretendard Variable", "Apple SD Gothic Neo", sans-serif;
   --sketch: #8a7560;
-  --f-body: "IsYun", "Pretendard Variable", Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+  --f-body: "IsYun", "Pretendard Variable", "Apple SD Gothic Neo", sans-serif;
   --f-num: var(--f-body);
   --i-line: #4a3a2c; --i-cream: #fbf3e4; --i-terra: #d98b5f; --i-wood: #b98b5e; --i-blue: #9bb8d3; --i-olive: #9db27a; --i-mustard: #e6bf62; --i-rose: #e9aeb1;
   color-scheme: light;
@@ -566,6 +569,14 @@ dialog::backdrop { background: var(--scrim); }
 /* 보여주기 모드 */
 .showcase-btn { display: inline-flex; align-items: center; gap: 6px; }
 .showcase-btn svg { width: 18px; height: 18px; }
+/* 좁은 화면에선 상단 버튼 글자를 빼고 아이콘만 둔다 (이름 칩까지 한 줄에 들어가게) */
+@media (max-width: 480px) {
+  header.top .showcase-btn .sc-label { display: none; }
+  header.top .showcase-btn { padding: 8px 6px; }
+}
+.inbox-count { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--amber); color: var(--on-accent); font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; }
+.inbox-item .title { white-space: pre-wrap; overflow-wrap: anywhere; font-weight: 400; }
+.inbox-item .del { border: 0; background: none; color: var(--muted); font-size: 20px; padding: 4px 8px; }
 .showcase-btn[aria-pressed="true"] { color: var(--accent); background: var(--accent-soft); font-weight: 600; }
 body.showcase input.num, body.showcase .amount-field input { filter: blur(7px); }
 
@@ -654,6 +665,9 @@ img.ico { object-fit: contain; }
 nav.tabs button img.ico { width: 28px; height: 28px; }
 .face { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .avatar:has(.face) { background: var(--surface); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--c) 45%, transparent); }
+/* 칸 안의 주민 얼굴은 귀가 잘리지 않게 아이콘처럼 작게 담는다 */
+.avatar .face { width: 32px; height: 32px; object-fit: contain; border-radius: 0; }
+.more-row .avatar:has(.face) { background: color-mix(in srgb, var(--c) 14%, transparent); box-shadow: none; }
 .me { display: inline-flex; align-items: center; gap: 6px; border: 0; font-family: inherit; cursor: pointer; }
 .me .face { width: 24px; height: 24px; margin-left: -6px; }
 .who .face { width: 22px; height: 22px; flex-shrink: 0; }
@@ -757,6 +771,8 @@ body {
         <button type="button" data-step="1" aria-label="다음 달"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
       <h1 class="view-title hidden" id="view-title"></h1>
+      <button class="text-btn showcase-btn" id="inbox-open" type="button" title="아무렇게나 적어 두면 나중에 정리해요">
+        <span data-ic="envelope"></span><span class="sc-label">메모 남기기</span><span class="inbox-count num hidden" id="inbox-count"></span></button>
       <button class="text-btn showcase-btn" id="showcase-toggle" type="button" aria-pressed="false" title="인스타 촬영용으로 금액을 가려요">
         <span data-ic="camera"></span><span class="sc-label">보여주기</span></button>
       <button class="me hidden" id="me" type="button" title="프로필 주민 고르기"></button>
@@ -786,7 +802,7 @@ body {
           <div id="upcoming"></div>
         </div>
         <div class="block a-env">
-          <div class="block-head"><h2>봉투</h2><span class="aside num" id="home-left"></span></div>
+          <div class="block-head"><h2>예산</h2><span class="aside num" id="home-left"></span></div>
           <div id="home-envelopes"></div>
           <button class="more-btn hidden" type="button" id="env-toggle"></button>
         </div>
@@ -801,14 +817,14 @@ body {
         <button class="chip" data-type="수입" aria-pressed="false">수입</button>
         <button class="chip" data-type="이동" aria-pressed="false">이동</button>
         <button class="chip" data-type="review" aria-pressed="false">검토 필요</button>
-        <select class="chip" id="tx-envelope"><option value="">모든 봉투</option></select>
+        <select class="chip" id="tx-envelope"><option value="">모든 예산</option></select>
       </div>
       <div class="block" id="tx-days"></div>
     </section>
 
     <section class="view hidden" id="view-budget">
       <div class="block">
-        <div class="block-head"><h2>봉투별 배정액</h2><span class="aside">숫자를 눌러 고쳐요</span></div>
+        <div class="block-head"><h2>예산별 배정액</h2><span class="aside">숫자를 눌러 고쳐요</span></div>
         <div id="budget-list"></div>
         <div class="totals"><span>배정 합계</span><b class="num" id="budget-total"></b></div>
         <div class="totals"><span>예상 월수입</span><input class="alloc num" id="expected-income" inputmode="numeric" aria-label="예상 월수입"></div>
@@ -863,7 +879,7 @@ body {
         <div id="day-events"></div>
       </div>
       <div class="block a-sat">
-        <div class="block-head"><h2>이번 달 토요일</h2><span class="aside">남편 쉬는 날</span></div>
+        <div class="block-head"><h2>이번 달 토요일</h2><span class="aside">연표 쉬는 날</span></div>
         <div class="rows" id="saturdays"></div>
       </div>
       </div>
@@ -891,7 +907,7 @@ body {
     <section class="view hidden" id="view-more">
       <div class="block">
         <div class="rows">
-          <button class="row more-row" type="button" data-goto="budget"><span class="avatar" style="--c:#5f7a45"><span data-ic="envelope"></span></span><span class="body"><span class="title">봉투 배정</span><span class="sub">달마다 봉투에 넣을 금액</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+          <button class="row more-row" type="button" data-goto="budget"><span class="avatar" style="--c:#5f7a45"><span data-ic="envelope"></span></span><span class="body"><span class="title">예산 배정</span><span class="sub">달마다 항목별로 정할 금액</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
           <button class="row more-row" type="button" data-goto="debt"><span class="avatar" style="--c:#3f7f74"><span data-ic="coins"></span></span><span class="body"><span class="title">부채</span><span class="sub">대출 잔액과 금리</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
           <button class="row more-row" type="button" data-goto="recurring"><span class="avatar" style="--c:#c0762e"><span data-ic="clock"></span></span><span class="body"><span class="title">정기 지출</span><span class="sub">월세, 구독, 공과금</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
           <button class="row more-row" type="button" data-goto="docs"><span class="avatar" style="--c:#4f78a6"><span data-ic="folder"></span></span><span class="body"><span class="title">자료</span><span class="sub">계약서, 평면도, 보증서</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
@@ -927,7 +943,7 @@ body {
         <span data-ic="buttons"></span>더보기</button>
       <div class="nav-sep desk-only"></div>
       <button type="button" class="desk-only" data-view="budget">
-        <span data-ic="envelope"></span>봉투 배정</button>
+        <span data-ic="envelope"></span>예산 배정</button>
       <button type="button" class="desk-only" data-view="debt">
         <span data-ic="coins"></span>부채</button>
       <button type="button" class="desk-only" data-view="recurring">
@@ -963,7 +979,7 @@ body {
       <label class="full">내용<input id="f-desc" required autocomplete="off" placeholder="예: 쿠팡이츠 마라탕"></label>
       <div class="hint" id="f-hint"></div>
       <label>날짜<input id="f-date" type="date" required></label>
-      <label>봉투<select id="f-envelope"><option value="">없음</option></select></label>
+      <label>예산<select id="f-envelope"><option value="">없음</option></select></label>
       <label>중분류<input id="f-cat" list="dl-cat" autocomplete="off"></label>
       <label>소분류<input id="f-sub" list="dl-sub" autocomplete="off"></label>
       <label class="full">결제수단<input id="f-pay" list="dl-pay" autocomplete="off"></label>
@@ -1085,6 +1101,22 @@ body {
   </form>
 </dialog>
 
+<dialog id="inbox-dialog">
+  <form class="sheet" id="inbox-form" method="dialog">
+    <h3>메모 남기기</h3>
+    <div class="form">
+      <label class="full">아무렇게나 적어 주세요<textarea id="inbox-text" required maxlength="4000" style="min-height:120px"
+        placeholder="예: 어제 이마트 장보기 5만2천원 카드&#10;관리사무소 전화 02-123-4567"></textarea></label>
+      <div class="hint">예산이나 분류는 몰라도 돼요. 나중에 가계부나 자료로 정리해요</div>
+    </div>
+    <div class="actions">
+      <button class="btn" type="button" id="inbox-cancel">닫기</button>
+      <button class="btn primary" type="submit" id="inbox-send">남기기</button>
+    </div>
+    <div class="files-head hidden" id="inbox-head"><span>아직 정리 안 된 메모</span><span id="inbox-usage" class="num"></span></div>
+    <div class="rows" id="inbox-list"></div>
+  </form>
+</dialog>
 <dialog id="lightbox" aria-label="사진 크게 보기">
   <div class="lb-track" id="lb-track"></div>
   <button class="lb-nav prev" type="button" id="lb-prev" aria-label="이전 사진">‹</button>
@@ -1133,7 +1165,7 @@ body {
       <label class="full">이름<input id="r-name" required autocomplete="off" placeholder="예: 신림 월세"></label>
       <label>언제<select id="r-when"><option value="day">매월 정한 날</option><option value="payday">월급날</option></select></label>
       <label id="r-day-wrap">며칠<input id="r-day" type="number" min="1" max="31" inputmode="numeric"></label>
-      <label>봉투<select id="r-envelope"><option value="">없음</option></select></label>
+      <label>예산<select id="r-envelope"><option value="">없음</option></select></label>
       <label>결제수단<input id="r-pay" list="dl-pay" autocomplete="off"></label>
       <label>시작<input id="r-start" type="date" required></label>
       <label>끝 (비우면 계속)<input id="r-end" type="date"></label>
@@ -1362,8 +1394,10 @@ async function start() {
   renderPasswordRow();
   await loadStatic();
   await loadPrivate();
-  await Promise.all([loadMonth(), loadChores(), loadNotices(), loadDocs()]);
+  await Promise.all([loadMonth(), loadChores(), loadNotices(), loadDocs(), loadInbox()]);
   watchChanges();
+  // 홈 화면 아이콘(manifest start_url)으로 열면 바로 메모 창을 띄운다
+  if (new URLSearchParams(location.search).has('memo') && !$('#pw-dialog').open) openInbox();
   if (cameFromLink && !hasPassword()) openPasswordDialog();
 }
 
@@ -1484,7 +1518,7 @@ async function loadStatic() {
   const opts = state.envelopes.map(e => `<option>${esc(e.name)}</option>`).join('');
   $('#f-envelope').innerHTML = '<option value="">없음</option>' + opts;
   $('#r-envelope').innerHTML = '<option value="">없음</option>' + opts;
-  $('#tx-envelope').innerHTML = '<option value="">모든 봉투</option>' + opts;
+  $('#tx-envelope').innerHTML = '<option value="">모든 예산</option>' + opts;
   $('#f-debt').innerHTML = '<option value="">선택 안 함</option>' +
     state.debts.map(d => `<option value="${esc(d.id)}">${esc(d.id)} · ${esc(d.product)}</option>`).join('');
 }
@@ -1603,7 +1637,7 @@ function renderHome() {
   $('#home-envelopes').innerHTML = visible.map(r => envHtml(r)).join('') || '<div class="empty">이번 달 기록이 없어요</div>';
   const hiddenCount = shown.length - LIMIT;
   $('#env-toggle').classList.toggle('hidden', hiddenCount <= 0);
-  $('#env-toggle').textContent = state.showAllEnv ? '접기' : `봉투 ${hiddenCount}개 더 보기`;
+  $('#env-toggle').textContent = state.showAllEnv ? '접기' : `예산 ${hiddenCount}개 더 보기`;
   $('#home-recent').innerHTML = state.tx.slice(0, 5).map(txHtml).join('') || '<div class="empty">거래가 없어요</div>';
 }
 
@@ -1739,6 +1773,62 @@ async function savePrivate(type, id, text) {
 }
 
 // 공지 ---------------------------------------------------------------
+
+// 받은 메모 -----------------------------------------------------------
+// 분류 없이 남긴 메모. 새별이 Claude와 가계부·자료로 정리하고 지운다
+
+async function loadInbox() {
+  const { data, error } = await sb.from('inbox').select('*').order('created_at', { ascending: false });
+  if (error) return fail(error);
+  state.inbox = data;
+  renderInbox();
+}
+function renderInbox() {
+  const items = state.inbox || [];
+  $('#inbox-count').textContent = items.length;
+  $('#inbox-count').classList.toggle('hidden', !items.length);
+  $('#inbox-head').classList.toggle('hidden', !items.length);
+  $('#inbox-usage').textContent = `${items.length}개`;
+  $('#inbox-list').innerHTML = items.map(m => {
+    const d = new Date(m.created_at);
+    const when = `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return `<div class="row inbox-item">
+      <span class="body"><span class="title">${esc(m.body)}</span><span class="sub num">${esc(nameOf(m.created_by))} · ${when}</span></span>
+      <button class="del" type="button" data-inbox-del="${m.id}" aria-label="메모 지우기">×</button>
+    </div>`;
+  }).join('');
+}
+function openInbox() {
+  $('#inbox-text').value = '';
+  renderInbox();
+  $('#inbox-dialog').showModal();
+  $('#inbox-text').focus();
+}
+$('#inbox-open').addEventListener('click', openInbox);
+$('#inbox-cancel').addEventListener('click', () => $('#inbox-dialog').close());
+$('#inbox-text').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) $('#inbox-form').requestSubmit();
+});
+$('#inbox-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const body = $('#inbox-text').value.trim();
+  if (!body) return;
+  const btn = $('#inbox-send');
+  btn.disabled = true;
+  const { error } = await sb.from('inbox').insert({ body });
+  btn.disabled = false;
+  if (error) return fail(error);
+  $('#inbox-dialog').close();
+  toast('메모를 남겼어요');
+  loadInbox();
+});
+$('#inbox-list').addEventListener('click', async e => {
+  const id = e.target.closest('[data-inbox-del]')?.dataset.inboxDel;
+  if (!id || !confirm('이 메모를 지울까요?')) return;
+  const { error } = await sb.from('inbox').delete().eq('id', id);
+  if (error) return fail(error);
+  loadInbox();
+});
 
 async function loadNotices() {
   const { data, error } = await sb.from('notices').select('*').order('pinned', { ascending: false }).order('updated_at', { ascending: false });
@@ -1972,7 +2062,7 @@ $('#tx-form').addEventListener('submit', async e => {
     one_off: $('#f-oneoff').checked,
     tags: $('#f-tags').value.split(',').map(s => s.trim()).filter(Boolean),
   };
-  if (row.type === '지출' && !row.envelope) return toast('지출은 봉투를 골라 주세요');
+  if (row.type === '지출' && !row.envelope) return toast('지출은 예산을 골라 주세요');
   const btn = $('#tx-save');
   btn.disabled = true;
   try {
@@ -2163,7 +2253,7 @@ function renderSchedule() {
   const list = byDay[sel] || [];
   const money = moneyByDay[sel] || [];
   $('#day-events').innerHTML =
-    (isSat(sel) ? '<div class="sat-note">남편이 쉬는 토요일이에요. 약속을 잡으면 서로 알려 주세요.</div>' : '') +
+    (isSat(sel) ? '<div class="sat-note">연표가 쉬는 토요일이에요. 약속을 잡으면 서로 알려 주세요.</div>' : '') +
     (list.length ? `<div class="rows">${list.map(ev => eventRow(ev)).join('')}</div>` : '<div class="empty">약속이 없어요</div>') +
     (money.length ? `<div class="rows">${money.map(mi => moneyRow(mi)).join('')}</div>` : '');
 
@@ -2211,7 +2301,7 @@ function renderOwnerSeg(sel, value, withTogether) {
 
 function syncEventHint() {
   const d = $('#e-date').value;
-  $('#e-hint').textContent = d && isSat(d) ? '토요일이에요. 남편이 쉬는 날이라 함께 정하면 좋아요' : '';
+  $('#e-hint').textContent = d && isSat(d) ? '토요일이에요. 연표가 쉬는 날이라 함께 정하면 좋아요' : '';
 }
 
 function openEvent(ev) {
@@ -3077,6 +3167,7 @@ function scheduleRefresh(table) {
   if (table === 'settings' || table === 'debts' || table === 'recurring') pending.statics = true;
   if (!table || table === 'private_notes') pending.private = true;
   if (!table || table === 'notices') pending.notices = true;
+  if (!table || table === 'inbox') pending.inbox = true;
   if (!table || table === 'docs' || table === 'doc_files') pending.docs = true;
   clearTimeout(refreshTimer);
   refreshTimer = setTimeout(flushRefresh, 400);
@@ -3089,7 +3180,7 @@ async function flushRefresh() {
   pending = { month: false, chores: false, statics: false };
   if (job.statics) await loadStatic();
   if (job.private) { await loadPrivate(); job.month = job.chores = true; }
-  await Promise.all([job.month && loadMonth(), job.chores && loadChores(), job.notices && loadNotices(), job.docs && loadDocs(),
+  await Promise.all([job.month && loadMonth(), job.chores && loadChores(), job.notices && loadNotices(), job.docs && loadDocs(), job.inbox && loadInbox(),
     state.view === 'notes' && renderNotes()]);
 }
 

@@ -1,0 +1,15 @@
+{
+  "name": "two-clocks-home",
+  "short_name": "우리집",
+  "description": "두 사람이 같이 쓰는 생활 허브",
+  "start_url": "./?memo",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3ece1",
+  "theme_color": "#f3ece1",
+  "lang": "ko",
+  "icons": [
+    { "src": "img/app-icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "img/app-icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
