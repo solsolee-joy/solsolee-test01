@@ -429,6 +429,7 @@ dialog::backdrop { background: var(--scrim); }
   nav.tabs button[data-view="more"] { display: none; }
   .desk-only { display: flex !important; }
   .nav-sep { height: 1px; background: var(--line); margin: 10px 8px; }
+  .nav-account { flex-direction: column; gap: 2px; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); }
   .nav-brand { position: absolute; top: 22px; left: 26px; font-family: var(--f-title); font-size: 20px; color: var(--text); display: flex; align-items: center; gap: 8px; }
   .nav-brand svg { width: 22px; height: 22px; color: var(--accent); }
 
@@ -902,6 +903,11 @@ body {
         <span data-ic="mailbox"></span>공지</button>
       <button type="button" class="desk-only" data-view="notes">
         <span data-ic="memo"></span>운영 메모</button>
+      <!-- 넓은 화면엔 더보기 탭이 없어서 계정 메뉴를 아래에 따로 둔다 -->
+      <div class="nav-account desk-only">
+        <button type="button" id="pw-open-side"><span data-ic="house"></span>비밀번호</button>
+        <button type="button" id="logout-side"><span data-ic="arrows"></span>로그아웃</button>
+      </div>
       <div class="nav-brand desk-only"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8"/><path d="M12 13c0-4 3-6.5 7-6.5 0 4-3 6.5-7 6.5z"/><path d="M12 15c0-3-2.3-5-5.5-5 0 3 2.3 5 5.5 5z"/></svg>two-clocks-home</div>
     </div>
   </nav>
@@ -1368,6 +1374,7 @@ function openPasswordDialog() {
   $('#pw-dialog').showModal();
 }
 $('#pw-open').addEventListener('click', openPasswordDialog);
+$('#pw-open-side').addEventListener('click', openPasswordDialog);
 $('#pw-cancel').addEventListener('click', () => $('#pw-dialog').close());
 $('#pw-form').addEventListener('submit', async e => {
   e.preventDefault();
@@ -1395,10 +1402,12 @@ $('#pw-form').addEventListener('submit', async e => {
   toast('비밀번호를 저장했어요. 다음부터는 메일 없이 들어와요');
 });
 
-$('#logout').addEventListener('click', async () => {
+async function logout() {
   await sb.auth.signOut();
   showLogin();
-});
+}
+$('#logout').addEventListener('click', logout);
+$('#logout-side').addEventListener('click', logout);
 
 sb.auth.onAuthStateChange((event) => {
   if (event === 'SIGNED_IN' && $('#app').classList.contains('hidden')) start();
@@ -1760,7 +1769,7 @@ const FAB_LABEL = { home: '기록하기', tx: '기록하기', schedule: '일정 
 function go(view) {
   state.view = view;
   for (const s of $$('section.view')) s.classList.toggle('hidden', s.id !== 'view-' + view);
-  for (const b of $$('nav.tabs button')) {
+  for (const b of $$('nav.tabs button[data-view]')) {
     if (b.dataset.view === view || b.dataset.view === TAB_OF[view]) b.setAttribute('aria-current', 'page');
     else b.removeAttribute('aria-current');
   }
@@ -1776,7 +1785,7 @@ function go(view) {
   window.scrollTo(0, 0);
 }
 
-$$('nav.tabs button').forEach(b => b.addEventListener('click', () => go(b.dataset.view)));
+$$('nav.tabs button[data-view]').forEach(b => b.addEventListener('click', () => go(b.dataset.view)));
 const desktop = matchMedia('(min-width: 960px)');
 desktop.addEventListener('change', () => { if (state.view === 'more' && desktop.matches) go('budget'); });
 $('#month-picker').addEventListener('click', e => {
