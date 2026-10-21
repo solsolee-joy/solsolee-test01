@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Gothic+Coding:wght@400;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap">
 <style>
 /* 온글잎 박다현체 (OFL, 눈누 웹폰트). 불러오기 전이나 실패하면 고운돋움으로 보인다 */
 @font-face {
@@ -47,6 +47,7 @@
   --shadow: 0 1px 0 rgba(90, 60, 30, .06), 0 6px 18px rgba(90, 60, 30, .05);
   --f-title: "OngleipParkDahyeon", "Gowun Dodum", "Pretendard Variable", Pretendard, "Noto Sans KR", sans-serif;
   --sketch: #8a7560;
+  --f-num: "Nanum Gothic Coding", ui-monospace, monospace;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -592,6 +593,55 @@ details.table-view th { color: var(--muted); }
 
 .placeholder { text-align: center; color: var(--muted); padding: 32px 16px; font-size: 15px; }
 .placeholder b { display: block; color: var(--text); font-size: 17px; margin-bottom: 4px; }
+
+/* 큰 금액은 타자기 느낌 숫자 */
+.hero .big, .hero .split .v, .env .left, .debt .bal, .plan-sum .v, .up-row .a, .row .end .amt, .totals b, .up-group .num {
+  font-family: var(--f-num); letter-spacing: -0.03em;
+}
+.hero .big { font-size: 32px; }
+
+/* 진행바: 퍼센트를 바 바깥 오른쪽에 */
+.env .track-row { display: flex; align-items: center; gap: 10px; margin: 8px 0 4px 20px; }
+.env .track-row .track { flex: 1; margin: 0; }
+.env .pct { font-family: var(--f-num); font-size: 12px; color: var(--muted); min-width: 38px; text-align: right; }
+.env .pct.over { color: var(--minus); font-weight: 700; }
+
+/* 집안일: 이번 주 누가 했나 */
+.week-grid { display: grid; grid-template-columns: 52px repeat(7, minmax(0, 1fr)); gap: 6px; align-items: center; }
+.week-grid .wh { font-size: 12px; color: var(--muted); text-align: center; }
+.week-grid .wh.today { color: var(--amber); font-weight: 700; }
+.week-grid .who { font-size: 13px; font-weight: 600; color: var(--text-2); display: flex; align-items: center; gap: 6px; }
+.week-grid .who i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.week-grid .sq {
+  aspect-ratio: 1; max-width: 34px; justify-self: center; width: 100%; border-radius: 6px 4px 7px 5px;
+  border: 1.5px solid color-mix(in srgb, var(--sketch) 45%, transparent); display: grid; place-items: center;
+  font-family: var(--f-num); font-size: 12px; color: var(--on-accent);
+}
+.week-grid .sq.on { background: color-mix(in srgb, var(--c) calc(45% + var(--n) * 15%), transparent); border-color: transparent; }
+.week-grid .sq.future { opacity: .35; }
+#chores-week { grid-column: 1 / -1; }
+
+/* 자료 분류: 서류 폴더 탭 */
+#doc-cats { gap: 4px; padding-bottom: 0; align-items: flex-end; overflow-y: visible; }
+#doc-cats .chip {
+  border-radius: 12px 12px 0 0; padding: 9px 16px 8px; background: var(--fill); color: var(--text-2);
+  border: 1px solid var(--line); border-bottom: 0; transform: translateY(1px);
+}
+#doc-cats .chip[aria-pressed="true"] { background: var(--surface); color: var(--text); font-weight: 600; padding-top: 11px; }
+#doc-cats + .block { border-top-left-radius: 0; }
+
+/* 빈 상태: 점선 상자 + 손글씨 한 줄 */
+.placeholder { border: 2px dashed color-mix(in srgb, var(--sketch) 45%, transparent); border-radius: 14px; background: none; }
+.placeholder b { font-family: var(--f-title); font-size: 22px; font-weight: 400; }
+
+/* 거래 목록 행 사이 가는 선 */
+.day .rows .row + .row { border-top: 1px solid var(--line); border-radius: 0; }
+
+/* 배경의 아주 옅은 나뭇잎 무늬 */
+body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='none' stroke='%238a7560' stroke-width='1.4' stroke-linecap='round' opacity='0.06'%3E%3Cpath d='M30 50c8-14 24-18 34-14-4 12-18 22-34 14z'/%3E%3Cpath d='M30 50l30-12'/%3E%3Cpath d='M112 118c-4-15 5-29 15-33 4 12-1 28-15 33z'/%3E%3Cpath d='M112 118l14-31'/%3E%3Cpath d='M118 30c6 2 9 8 7 14-6-2-9-8-7-14z'/%3E%3Cpath d='M40 128c5-5 12-5 16 0-5 5-12 5-16 0z'/%3E%3C/g%3E%3C/svg%3E");
+  background-attachment: fixed;
+}
 </style>
 </head>
 <body>
@@ -741,6 +791,10 @@ details.table-view th { color: var(--muted); }
     </section>
 
     <section class="view hidden" id="view-chores">
+      <div class="block" id="chores-week">
+        <div class="block-head"><h2>이번 주 누가 했나</h2><span class="aside num" id="chores-week-sum"></span></div>
+        <div class="week-grid" id="week-grid"></div>
+      </div>
       <div class="block">
         <div class="block-head"><h2>오늘까지</h2><span class="aside num" id="chores-due-count"></span></div>
         <div id="chores-due"></div>
@@ -1258,7 +1312,8 @@ function envHtml(r, editable = false) {
   const meta = r.available ? `${won(r.spent)} / ${won(r.available)}` : (editable ? `${won(r.spent)} 씀` : '배정 없음');
   return `<div class="env" style="--c:${envColor(r.name)}">
     <div class="line"><span class="dot"></span><span class="name">${esc(r.name)}</span>${right}</div>
-    ${r.available ? `<div class="track ${over ? 'over' : ''}"><i style="width:${pct}%"></i></div>` : ''}
+    ${r.available ? `<div class="track-row"><div class="track ${over ? 'over' : ''}"><i style="width:${pct}%"></i></div>
+      <span class="pct ${over ? 'over' : ''}">${showcase ? '●●%' : Math.round((r.spent / r.available) * 100) + '%'}</span></div>` : ''}
     <div class="meta num">${meta}</div>
   </div>`;
 }
@@ -1992,12 +2047,14 @@ const REPEAT_LABEL = { 1: '매일', 7: '매주', 14: '2주마다', 30: '한 달�
 const repeatLabel = n => n ? (REPEAT_LABEL[n] || `${n}일마다`) : '한 번만';
 
 async function loadChores() {
-  const [chores, logs, upcoming] = await Promise.all([
+  const [chores, logs, upcoming, week] = await Promise.all([
     sb.from('chores').select('*').eq('active', true).order('due_on'),
     sb.from('chore_logs').select('*, chores(title)').order('done_on', { ascending: false }).order('id', { ascending: false }).limit(15),
     sb.from('events').select('*').gte('date', today()).lte('date', addDays(today(), 6)),
+    sb.from('chore_logs').select('done_by, done_on').gte('done_on', mondayOf(today())),
   ]);
-  for (const r of [chores, logs, upcoming]) if (r.error) return fail(r.error);
+  for (const r of [chores, logs, upcoming, week]) if (r.error) return fail(r.error);
+  state.weekLogs = week.data;
   state.chores = chores.data;
   state.choreLogs = logs.data;
   state.upcoming = upcoming.data.sort(eventOrder);
@@ -2021,7 +2078,30 @@ function choreRow(c) {
   </div>`;
 }
 
+function mondayOf(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return isoOf(d);
+}
+
+function renderWeekGrid() {
+  const mon = mondayOf(today());
+  const days = [...Array(7)].map((_, i) => addDays(mon, i));
+  const logs = state.weekLogs || [];
+  let html = '<span></span>' + days.map((d, i) => `<span class="wh ${d === today() ? 'today' : ''}">${'월화수목금토일'[i]}</span>`).join('');
+  for (const m of state.members) {
+    html += `<span class="who" style="--c:${m.color}"><i></i>${esc(m.display_name)}</span>`;
+    html += days.map(d => {
+      const n = logs.filter(l => l.done_by === m.email && l.done_on === d).length;
+      return `<span class="sq ${n ? 'on' : ''} ${d > today() ? 'future' : ''}" style="--c:${m.color};--n:${Math.min(n, 3)}" title="${mmdd(d)} ${n}개">${n > 1 ? n : ''}</span>`;
+    }).join('');
+  }
+  $('#week-grid').innerHTML = html;
+  $('#chores-week-sum').textContent = state.members.map(m => `${m.display_name} ${logs.filter(l => l.done_by === m.email).length}`).join(' · ');
+}
+
 function renderChores() {
+  renderWeekGrid();
   const t = today();
   const due = state.chores.filter(c => c.due_on <= t);
   const soon = state.chores.filter(c => c.due_on > t);
