@@ -431,6 +431,13 @@ dialog::backdrop { background: var(--scrim); }
 .upload input { display: none; }
 .files-head { display: flex; justify-content: space-between; align-items: baseline; margin: 18px 0 10px; font-size: 13px; color: var(--muted); font-weight: 500; }
 @media (min-width: 640px) { #doc-dialog { max-width: 720px; } }
+.doc-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.doc-meta .cat { font-weight: 600; padding: 3px 10px; border-radius: 999px; color: var(--c); background: color-mix(in srgb, var(--c) 13%, transparent); }
+.doc-meta .vis { display: inline-flex; align-items: center; gap: 4px; }
+#dv-title { font-size: 24px; margin: 0 0 14px; line-height: 1.3; }
+.doc-body { font-size: 16px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; color: var(--text); }
+.doc-body a { color: var(--accent); }
+.doc-body.empty-body { color: var(--muted); }
 
 /* 더보기 */
 .more-row .avatar { border-radius: 12px; }
@@ -732,7 +739,18 @@ dialog::backdrop { background: var(--scrim); }
 </dialog>
 
 <dialog id="doc-dialog">
-  <form class="sheet" id="doc-form" method="dialog">
+  <div class="sheet hidden" id="doc-view">
+    <div class="doc-meta"><span class="cat" id="dv-cat"></span><span class="vis" id="dv-vis"></span><span id="dv-date" class="num"></span></div>
+    <h3 id="dv-title"></h3>
+    <div class="doc-body" id="dv-body"></div>
+    <div class="files-head"><span>파일</span><span id="dv-usage"></span></div>
+    <div class="files" id="dv-files"></div>
+    <div class="actions">
+      <button class="btn" type="button" id="dv-close">닫기</button>
+      <button class="btn primary" type="button" id="dv-edit">고치기</button>
+    </div>
+  </div>
+  <form class="sheet hidden" id="doc-form" method="dialog">
     <h3 id="doc-dialog-title">자료 추가</h3>
     <div class="seg" id="d-shared">
       <button type="button" data-v="1" aria-pressed="true">함께 보기</button>
@@ -1912,36 +1930,65 @@ $('#d-shared').addEventListener('click', e => {
 
 function openDoc(doc) {
   state.editingDoc = doc || null;
-  $('#doc-dialog-title').textContent = doc ? '자료' : '자료 추가';
+  if (doc) showDocView(); else showDocEdit();
+  $('#doc-dialog').showModal();
+  if (!doc) $('#doc-title').focus();
+}
+
+const linkify = text => esc(text).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+
+function showDocView() {
+  const doc = state.editingDoc;
+  $('#doc-form').classList.add('hidden');
+  $('#doc-view').classList.remove('hidden');
+  $('#dv-cat').textContent = doc.category;
+  $('#dv-cat').style.setProperty('--c', DOC_COLORS[doc.category] || '#7a8794');
+  $('#dv-vis').innerHTML = doc.shared ? '함께 보기' : `${LOCK_SVG} 나만 보기`;
+  $('#dv-date').textContent = `· ${person(doc.owner).display_name} · ${mmdd(doc.updated_at.slice(0, 10))} 수정`;
+  $('#dv-title').textContent = doc.title;
+  $('#dv-body').innerHTML = doc.body ? linkify(doc.body) : '설명이 없어요';
+  $('#dv-body').classList.toggle('empty-body', !doc.body);
+  renderDocFiles();
+}
+
+function showDocEdit() {
+  const doc = state.editingDoc;
+  $('#doc-view').classList.add('hidden');
+  $('#doc-form').classList.remove('hidden');
+  $('#doc-dialog-title').textContent = doc ? '자료 고치기' : '자료 추가';
   $('#doc-delete').classList.toggle('hidden', !doc);
   $('#doc-title').value = doc?.title || '';
   $('#doc-cat').value = doc?.category || state.docFilter.cat || '집·이사';
   $('#doc-body').value = doc?.body || '';
   setDocShared(doc ? doc.shared : true);
   renderDocFiles();
-  $('#doc-dialog').showModal();
-  if (!doc) $('#doc-title').focus();
 }
+$('#dv-close').addEventListener('click', () => $('#doc-dialog').close());
+$('#dv-edit').addEventListener('click', () => { showDocEdit(); $('#doc-title').focus(); });
 
 async function renderDocFiles() {
   const doc = state.editingDoc;
   const files = doc ? state.docFiles.filter(f => f.doc_id === doc.id) : [];
   const total = files.reduce((a, f) => a + Number(f.size || 0), 0);
-  $('#doc-usage').textContent = files.length ? `${files.length}개 · ${fileSize(total)}` : '';
+  const usage = files.length ? `${files.length}개 · ${fileSize(total)}` : '';
+  $('#doc-usage').textContent = usage;
+  $('#dv-usage').textContent = usage;
   let urls = {};
   if (files.length) {
     const { data } = await sb.storage.from('docs').createSignedUrls(files.map(f => f.path), 600);
     urls = Object.fromEntries((data || []).map(u => [u.path, u.signedUrl]));
   }
-  $('#doc-files').innerHTML = files.map(f => {
+  const tile = (f, editable) => {
     const url = urls[f.path] || '#';
     const isImg = (f.mime || '').startsWith('image/');
     return `<a class="file" href="${esc(url)}" target="_blank" rel="noopener">
       <span class="thumb">${isImg ? `<img src="${esc(url)}" alt="" loading="lazy">` : esc(fileExt(f.name).toUpperCase() || '파일')}</span>
       <span class="fname">${esc(f.name)}</span><span class="fsize num">${f.size ? fileSize(f.size) : ''}</span>
-      <button class="x" type="button" data-file-del="${f.id}" aria-label="${esc(f.name)} 지우기">×</button>
+      ${editable ? `<button class="x" type="button" data-file-del="${f.id}" aria-label="${esc(f.name)} 지우기">×</button>` : ''}
     </a>`;
-  }).join('') + `<label class="upload" id="doc-drop"><input type="file" id="doc-input" multiple>
+  };
+  $('#dv-files').innerHTML = files.map(f => tile(f, false)).join('') || '<div class="empty" style="grid-column:1/-1;text-align:left;padding:0">파일이 없어요</div>';
+  $('#doc-files').innerHTML = files.map(f => tile(f, true)).join('') + `<label class="upload" id="doc-drop"><input type="file" id="doc-input" multiple>
       <span>+ 파일 올리기<br><small>PDF, 사진 등 · 50MB까지</small></span></label>`;
 }
 
@@ -2015,12 +2062,15 @@ $('#doc-files').addEventListener('click', async e => {
   renderDocFiles();
 });
 
-$('#doc-cancel').addEventListener('click', () => $('#doc-dialog').close());
+$('#doc-cancel').addEventListener('click', () => {
+  if (state.editingDoc) showDocView();
+  else $('#doc-dialog').close();
+});
 $('#doc-form').addEventListener('submit', async e => {
   e.preventDefault();
   if (!(await saveDoc())) return;
-  $('#doc-dialog').close();
   toast('저장했어요');
+  showDocView();
   loadDocs();
 });
 $('#doc-delete').addEventListener('click', async () => {
