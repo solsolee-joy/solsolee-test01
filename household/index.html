@@ -14,6 +14,13 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;600;700&display=swap">
 <style>
+/* 온글잎 박다현체 (OFL, 눈누 웹폰트). 불러오기 전이나 실패하면 고운돋움으로 보인다 */
+@font-face {
+  font-family: "OngleipParkDahyeon";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/2411-3@1.0/Ownglyph_ParkDaHyun.woff2") format("woff2");
+  font-weight: normal;
+  font-display: swap;
+}
 :root {
   /* 크림 벽, 리넨 패브릭, 월넛 가구, 올리브 침구, 앰버 스탠드 불빛 */
   --bg: #f3ece1;
@@ -38,7 +45,8 @@
   --s-expense: #c0762e;
   --s-debt: #5f7a45;
   --shadow: 0 1px 0 rgba(90, 60, 30, .06), 0 6px 18px rgba(90, 60, 30, .05);
-  --f-title: "Gowun Dodum", "Pretendard Variable", Pretendard, "Noto Sans KR", sans-serif;
+  --f-title: "OngleipParkDahyeon", "Gowun Dodum", "Pretendard Variable", Pretendard, "Noto Sans KR", sans-serif;
+  --sketch: #8a7560;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -56,6 +64,8 @@
     --amber: #e3a85a;
     --amber-soft: #43331f;
     --on-accent: #1d1814;
+  --sketch: #a8957d;
+    --sketch: #a8957d;
     --plus: #8cb0dc;
     --minus: #e08a95;
     --warn: #e3a85a;
@@ -114,29 +124,47 @@ button { cursor: pointer; }
 header.top { position: sticky; top: 0; z-index: 5; background: var(--bg); }
 header.top .wrap { display: flex; align-items: center; height: 60px; gap: 4px; }
 .month { display: flex; align-items: center; gap: 2px; flex: 1; }
-.month h1 { font-family: var(--f-title); font-size: 24px; font-weight: 400; margin: 0 4px; }
+.month h1 { font-family: var(--f-title); font-size: 28px; font-weight: 400; margin: 0 4px; }
 .month button {
   border: 0; background: none; width: 32px; height: 32px; border-radius: 10px; color: var(--muted);
   display: grid; place-items: center;
 }
 .month button:hover { background: var(--fill); }
 .month button svg { width: 18px; height: 18px; }
-.view-title { font-family: var(--f-title); font-size: 24px; font-weight: 400; margin: 0; flex: 1; }
+.view-title { font-family: var(--f-title); font-size: 28px; font-weight: 400; margin: 0; flex: 1; }
 .text-btn { border: 0; background: none; color: var(--muted); font-size: 14px; padding: 8px 10px; border-radius: 10px; }
 .text-btn:hover { background: var(--fill); }
 
 main { padding: 4px 0 24px; }
 
 /* 블록 */
-.block { background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); border-radius: 18px; padding: 22px 20px; margin-bottom: 12px; }
+.block { position: relative; background: var(--surface); box-shadow: var(--shadow); border-radius: 18px 22px 16px 20px / 20px 16px 22px 18px; padding: 22px 20px; margin-bottom: 12px; }
+.block::before {
+  content: ""; position: absolute; inset: 1px; pointer-events: none; border-radius: inherit;
+  border: 1.6px solid color-mix(in srgb, var(--sketch) 55%, transparent); filter: url(#sketch);
+}
 .block-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
-.block-head h2 { font-family: var(--f-title); font-size: 19px; font-weight: 400; margin: 0; }
+.block-head h2 { font-family: var(--f-title); font-size: 22px; font-weight: 400; margin: 0; letter-spacing: 0; }
 .block-head .aside { color: var(--muted); font-size: 14px; }
 
 /* 대표 숫자 */
 .hero .label { color: var(--text-2); font-size: 15px; font-weight: 500; }
 .hero .big { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; margin: 2px 0 2px; }
 .hero { background: linear-gradient(160deg, var(--surface) 55%, var(--amber-soft)); }
+/* 찢은 종이: 아래 가장자리를 들쭉날쭉하게 잘라 낸다 */
+.torn {
+  --tear: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='12' viewBox='0 0 120 12' preserveAspectRatio='none'%3E%3Cpath d='M0 0H120V5L114 9 107 4 99 10 92 6 85 11 77 5 70 9 62 3 55 10 47 6 40 11 32 4 25 8 17 3 10 9 4 5 0 8Z'/%3E%3C/svg%3E");
+  -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - 11px) no-repeat, var(--tear) bottom / 120px 12px repeat-x;
+          mask: linear-gradient(#000 0 0) top / 100% calc(100% - 11px) no-repeat, var(--tear) bottom / 120px 12px repeat-x;
+  padding-bottom: 32px; box-shadow: none; border-radius: 4px 4px 0 0;
+}
+.torn::before { display: none; }
+.taped { overflow: visible; }
+.taped::after {
+  content: ""; position: absolute; top: -9px; left: 50%; width: 92px; height: 22px; transform: translateX(-50%) rotate(-2.5deg);
+  background: color-mix(in srgb, var(--accent) 28%, transparent); border-left: 2px dotted color-mix(in srgb, var(--surface) 70%, transparent);
+  border-right: 2px dotted color-mix(in srgb, var(--surface) 70%, transparent); pointer-events: none; z-index: 1;
+}
 .hero .note { color: var(--muted); font-size: 13px; }
 .hero .split { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 18px; }
 .hero .split > div { background: var(--fill); border-radius: 14px; padding: 12px 14px; }
@@ -182,7 +210,7 @@ button.row:hover { background: var(--fill); }
 .env .left { font-weight: 600; }
 .env .left.over { color: var(--minus); }
 .env .left.none { color: var(--muted); font-weight: 500; font-size: 14px; }
-.env .track { height: 6px; background: var(--fill); border-radius: 999px; overflow: hidden; margin: 8px 0 4px 20px; }
+.env .track { height: 7px; background: var(--fill); border-radius: 6px 3px 5px 4px; overflow: hidden; margin: 8px 0 4px 20px; filter: url(#sketch-soft); }
 .env .track i { display: block; height: 100%; border-radius: 999px; background: var(--c); }
 .env .track.over i { background: var(--minus); }
 .env .meta { font-size: 13px; color: var(--muted); margin-left: 20px; }
@@ -225,7 +253,7 @@ select.chip { appearance: none; padding-right: 14px; }
 .debt .rate { font-size: 14px; font-weight: 600; color: var(--text-2); }
 .debt .rate.high { color: var(--minus); }
 .debt .bal { font-size: 20px; font-weight: 700; margin-top: 2px; }
-.debt .track { height: 6px; background: var(--fill); border-radius: 999px; overflow: hidden; margin: 10px 0 6px; }
+.debt .track { height: 7px; background: var(--fill); border-radius: 6px 3px 5px 4px; overflow: hidden; margin: 10px 0 6px; filter: url(#sketch-soft); }
 .debt .track i { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
 .debt .meta { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
 .debt .link { border: 0; background: none; color: var(--accent); font-size: 13px; font-weight: 600; padding: 0; flex-shrink: 0; }
@@ -305,7 +333,7 @@ dialog::backdrop { background: var(--scrim); }
 
 /* 로그인 */
 .login { max-width: 400px; margin: 18vh auto 0; }
-.login h1 { font-family: var(--f-title); font-size: 28px; font-weight: 400; margin: 0 0 6px; }
+.login h1 { font-family: var(--f-title); font-size: 32px; font-weight: 400; margin: 0 0 6px; }
 .login p { color: var(--text-2); margin: 0 0 28px; }
 .login form { display: flex; flex-direction: column; gap: 10px; }
 .login input { padding: 16px; border: 0; border-radius: 14px; background: var(--surface); font-size: 17px; }
@@ -334,7 +362,11 @@ dialog::backdrop { background: var(--scrim); }
 .cal .day.sat { background: var(--accent-soft); }
 .cal .day.out { visibility: hidden; }
 .cal .day .d { font-size: 15px; font-weight: 500; width: 30px; height: 30px; line-height: 30px; border-radius: 50%; }
-.cal .day.today .d { background: var(--amber); color: #fffaf2 !important; font-weight: 700; box-shadow: 0 0 0 4px var(--amber-soft); }
+.cal .day.today .d { color: var(--amber) !important; font-weight: 700; position: relative; }
+.cal .day.today .d::after {
+  content: ""; position: absolute; inset: -3px -5px -2px -4px; border: 2px solid var(--amber); border-radius: 52% 46% 55% 44% / 48% 56% 44% 52%;
+  transform: rotate(-8deg); filter: url(#sketch); pointer-events: none;
+}
 .cal .day[aria-pressed="true"] { background: var(--fill); }
 .cal .dots { display: flex; gap: 3px; height: 6px; }
 .cal .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
@@ -563,6 +595,17 @@ details.table-view th { color: var(--muted); }
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <!-- 손으로 그린 듯 흔들리는 선 -->
+  <filter id="sketch" x="-5%" y="-5%" width="110%" height="110%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="3.2" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <filter id="sketch-soft" x="-2%" y="-40%" width="104%" height="180%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="1" seed="3" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="2" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
 
 <div id="login" class="wrap hidden">
   <div class="login">
@@ -594,7 +637,7 @@ details.table-view th { color: var(--muted); }
   <main class="wrap">
     <section class="view" id="view-home">
       <div class="col">
-        <div class="block hero a-hero" id="hero"></div>
+        <div class="block hero torn a-hero" id="hero"></div>
         <div class="block a-summary">
           <div class="rows" id="summary-rows"></div>
         </div>
@@ -608,7 +651,7 @@ details.table-view th { color: var(--muted); }
         </div>
       </div>
       <div class="col">
-        <div class="block a-today" id="today-block"></div>
+        <div class="block taped a-today" id="today-block"></div>
         <div class="block a-upcoming">
           <div class="block-head"><h2>나갈 돈</h2><span class="payday-chip num" id="payday-chip"></span></div>
           <div id="upcoming"></div>
