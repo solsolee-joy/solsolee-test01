@@ -451,6 +451,12 @@ dialog::backdrop { background: var(--scrim); }
 .doc-body a { color: var(--accent); }
 .doc-body.empty-body { color: var(--muted); }
 
+/* 보여주기 모드 */
+.showcase-btn { display: inline-flex; align-items: center; gap: 6px; }
+.showcase-btn svg { width: 18px; height: 18px; }
+.showcase-btn[aria-pressed="true"] { color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+body.showcase input.num, body.showcase .amount-field input { filter: blur(7px); }
+
 /* 돈 일정 (약속과 구분) */
 .cal .dots i.money { border-radius: 2px; background: var(--muted); }
 .cal .chips em.money { color: var(--text-2); background: none; box-shadow: inset 0 0 0 1px var(--fill-strong); }
@@ -541,6 +547,8 @@ details.table-view th { color: var(--muted); }
         <button type="button" data-step="1" aria-label="다음 달"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
       <h1 class="view-title hidden" id="view-title"></h1>
+      <button class="text-btn showcase-btn" id="showcase-toggle" type="button" aria-pressed="false" title="인스타 촬영용으로 금액을 가려요">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span>보여주기</span></button>
       <span class="me hidden" id="me"></span>
     </div>
   </header>
@@ -911,9 +919,13 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
-const fmt = n => Math.round(Number(n || 0)).toLocaleString('ko-KR');
+// 보여주기 모드: 인스타 촬영용으로 화면의 금액을 모두 가린다. 입력칸 값은 fmtInput으로 실제 숫자를 유지한다
+let showcase = (() => { try { return localStorage.getItem('showcase') === '1'; } catch { return false; } })();
+const MASK = '●●●,●●●';
+const fmtInput = n => Math.round(Number(n || 0)).toLocaleString('ko-KR');
+const fmt = n => showcase ? MASK : fmtInput(n);
 const won = n => (n == null ? '-' : fmt(n) + '원');
-const signedWon = n => (n > 0 ? '+' : n < 0 ? '−' : '') + fmt(Math.abs(n)) + '원';
+const signedWon = n => showcase ? MASK + '원' : (n > 0 ? '+' : n < 0 ? '−' : '') + fmt(Math.abs(n)) + '원';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const parseAmount = s => Number(String(s).replace(/[^\d]/g, '')) || 0;
 const pad = n => String(n).padStart(2, '0');
@@ -1155,7 +1167,7 @@ function envHtml(r, editable = false) {
   const over = r.available > 0 && r.spent > r.available;
   let right;
   if (editable) {
-    right = `<input class="alloc num" data-env="${esc(r.name)}" inputmode="numeric" value="${r.available ? fmt(r.available) : ''}" placeholder="0" aria-label="${esc(r.name)} 배정액">`;
+    right = `<input class="alloc num" data-env="${esc(r.name)}" inputmode="numeric" value="${r.available ? fmtInput(r.available) : ''}" placeholder="0" aria-label="${esc(r.name)} 배정액">`;
   } else if (!r.available) {
     right = `<span class="left none num">${won(r.spent)} 씀</span>`;
   } else {
@@ -1267,7 +1279,7 @@ function renderBudget() {
   const total = rows.reduce((a, r) => a + r.available, 0);
   const income = state.expectedIncome;
   $('#budget-total').textContent = won(total);
-  if (document.activeElement !== $('#expected-income')) $('#expected-income').value = income ? fmt(income) : '';
+  if (document.activeElement !== $('#expected-income')) $('#expected-income').value = income ? fmtInput(income) : '';
   const gap = income - total;
   $('#budget-callout').innerHTML = !total || !income ? '' : gap < 0
     ? `<div class="callout bad num">배정이 예상 월수입보다 ${fmt(-gap)}원 많아요</div>`
@@ -1490,7 +1502,7 @@ $('#f-envelope').addEventListener('change', syncDebtField);
 for (const id of ['#f-amount', '#d-balance', '#d-pay']) {
   $(id).addEventListener('input', e => {
     const n = parseAmount(e.target.value);
-    e.target.value = n ? fmt(n) : '';
+    e.target.value = n ? fmtInput(n) : '';
   });
 }
 
@@ -1521,7 +1533,7 @@ function openTx(t) {
   setFormType(t?.type || '지출');
   $('#f-desc').value = t?.description || '';
   $('#f-date').value = t?.date || (state.month === today().slice(0, 7) ? today() : `${state.month}-01`);
-  $('#f-amount').value = t ? fmt(t.amount) : '';
+  $('#f-amount').value = t ? fmtInput(t.amount) : '';
   $('#f-envelope').value = t?.envelope || '';
   $('#f-pay').value = t?.payment_method || '';
   $('#f-cat').value = t?.category || '';
@@ -1624,7 +1636,7 @@ $('#tx-delete').addEventListener('click', async () => {
 $('#budget-list').addEventListener('input', e => {
   if (!e.target.matches('.alloc')) return;
   const n = parseAmount(e.target.value);
-  e.target.value = n ? fmt(n) : '';
+  e.target.value = n ? fmtInput(n) : '';
 });
 $('#budget-list').addEventListener('change', async e => {
   if (!e.target.matches('.alloc')) return;
@@ -1638,7 +1650,7 @@ $('#budget-list').addEventListener('change', async e => {
 });
 $('#expected-income').addEventListener('input', e => {
   const n = parseAmount(e.target.value);
-  e.target.value = n ? fmt(n) : '';
+  e.target.value = n ? fmtInput(n) : '';
 });
 $('#expected-income').addEventListener('change', async e => {
   const value = parseAmount(e.target.value);
@@ -1667,9 +1679,9 @@ $('#copy-budget').addEventListener('click', async () => {
 function openDebt(d) {
   state.editingDebt = d;
   $('#debt-dialog-title').textContent = `${d.id} · ${d.product}`;
-  $('#d-balance').value = fmt(d.balance);
+  $('#d-balance').value = fmtInput(d.balance);
   $('#d-next').value = d.next_due || '';
-  $('#d-pay').value = d.monthly_payment ? fmt(d.monthly_payment) : '';
+  $('#d-pay').value = d.monthly_payment ? fmtInput(d.monthly_payment) : '';
   $('#d-memo').value = d.memo || '';
   $('#debt-dialog').showModal();
 }
@@ -2125,7 +2137,7 @@ $('#env-toggle').addEventListener('click', () => { state.showAllEnv = !state.sho
 
 // 월별 흐름 차트 -------------------------------------------------------
 
-const compactWon = n => n >= 1e8 ? (n / 1e8).toFixed(1).replace(/\.0$/, '') + '억' : n >= 1e4 ? Math.round(n / 1e4).toLocaleString('ko-KR') + '만' : String(n);
+const compactWon = n => showcase ? '●●' : n >= 1e8 ? (n / 1e8).toFixed(1).replace(/\.0$/, '') + '억' : n >= 1e4 ? Math.round(n / 1e4).toLocaleString('ko-KR') + '만' : String(n);
 
 // 차트를 실제 폭으로 그려 글씨 크기가 늘거나 줄지 않게 한다
 function chartWidth(sel) {
@@ -2326,13 +2338,13 @@ $('#rec-list').addEventListener('click', e => {
 
 function syncRecWhen() { $('#r-day-wrap').classList.toggle('hidden', $('#r-when').value === 'payday'); }
 $('#r-when').addEventListener('change', syncRecWhen);
-$('#r-amount').addEventListener('input', e => { const n = parseAmount(e.target.value); e.target.value = n ? fmt(n) : ''; });
+$('#r-amount').addEventListener('input', e => { const n = parseAmount(e.target.value); e.target.value = n ? fmtInput(n) : ''; });
 
 function openRec(r) {
   state.editingRec = r || null;
   $('#rec-dialog-title').textContent = r ? '정기 지출 고치기' : '정기 지출 추가';
   $('#rec-delete').classList.toggle('hidden', !r);
-  $('#r-amount').value = r ? fmt(r.amount) : '';
+  $('#r-amount').value = r ? fmtInput(r.amount) : '';
   $('#r-name').value = r?.name || '';
   $('#r-when').value = r?.on_payday ? 'payday' : 'day';
   $('#r-day').value = r?.day || '';
@@ -2669,6 +2681,22 @@ document.addEventListener('visibilitychange', () => {
   scheduleRefresh();
   if (location.protocol.startsWith('http')) checkPageVersion();
 });
+
+function applyShowcase() {
+  document.body.classList.toggle('showcase', showcase);
+  $('#showcase-toggle').setAttribute('aria-pressed', String(showcase));
+  $('#showcase-toggle span').textContent = showcase ? '보여주기 중' : '보여주기';
+}
+$('#showcase-toggle').addEventListener('click', () => {
+  showcase = !showcase;
+  try { localStorage.setItem('showcase', showcase ? '1' : '0'); } catch { /* 이번 화면에서만 적용 */ }
+  applyShowcase();
+  render();
+  if (state.view === 'debt') renderPlan();
+  if (state.view === 'docs') renderDocs();
+  toast(showcase ? '금액을 가렸어요. 촬영해도 괜찮아요' : '금액을 다시 보여 줘요');
+});
+applyShowcase();
 
 start().catch(fail);
 </script>
