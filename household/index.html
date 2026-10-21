@@ -15,6 +15,9 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap">
 <style>
 :root {
+  --s-income: #3182f6;
+  --s-expense: #e07a12;
+  --s-debt: #12a5b8;
   --bg: #f2f4f6;
   --surface: #ffffff;
   --fill: #f2f4f6;
@@ -49,6 +52,9 @@
     --warn: #f5b03a;
     --warn-soft: #3a2f1c;
     --scrim: rgba(0, 0, 0, .6);
+    --s-income: #3d86ef;
+    --s-expense: #d9781a;
+    --s-debt: #1597a8;
     color-scheme: dark;
   }
 }
@@ -56,6 +62,7 @@
   --bg: #17171c; --surface: #202027; --fill: #2c2c35; --fill-strong: #3a3a45; --text: #e4e4e5;
   --text-2: #b0b0b8; --muted: #7e7e87; --line: #2c2c35; --accent: #4d94f8; --accent-soft: #1f2b3d;
   --plus: #4d94f8; --minus: #f4646f; --warn: #f5b03a; --warn-soft: #3a2f1c; --scrim: rgba(0, 0, 0, .6);
+  --s-income: #3d86ef; --s-expense: #d9781a; --s-debt: #1597a8;
   color-scheme: dark;
 }
 
@@ -322,7 +329,7 @@ dialog::backdrop { background: var(--scrim); }
 .cal .chips { display: none; }
 .col { display: contents; }
 #view-home:not(.hidden) { display: flex; flex-direction: column; }
-.a-today { order: 0; } .a-hero { order: 1; } .a-summary { order: 2; } .a-env { order: 3; } .a-recent { order: 4; }
+.a-today { order: 0; } .a-hero { order: 1; } .a-upcoming { order: 2; } .a-summary { order: 3; } .a-env { order: 4; } .a-flow { order: 5; } .a-recent { order: 6; }
 .desk-only { display: none !important; }
 
 /* PC */
@@ -360,6 +367,7 @@ dialog::backdrop { background: var(--scrim); }
   #view-home:not(.hidden) {
     display: grid; gap: 16px; align-items: start; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
+  #view-debt:not(.hidden) { max-width: 980px; }
   #view-schedule:not(.hidden) {
     display: grid; gap: 16px; align-items: start; grid-template-columns: minmax(0, 1.9fr) minmax(300px, 1fr);
   }
@@ -439,6 +447,58 @@ dialog::backdrop { background: var(--scrim); }
 .doc-body a { color: var(--accent); }
 .doc-body.empty-body { color: var(--muted); }
 
+/* 나갈 돈 */
+.up-group { font-size: 13px; color: var(--muted); font-weight: 500; display: flex; justify-content: space-between; padding: 10px 0 2px; }
+.up-group:first-child { padding-top: 0; }
+.up-row { display: flex; align-items: center; gap: 12px; padding: 9px 0; }
+.up-row .d { width: 44px; flex-shrink: 0; font-size: 13px; font-weight: 600; color: var(--text-2); }
+.up-row .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex-shrink: 0; }
+.up-row .n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.up-row .a { font-weight: 600; }
+.up-total { display: flex; justify-content: space-between; border-top: 1px solid var(--line); margin-top: 6px; padding-top: 12px; font-weight: 600; }
+.payday-chip { font-size: 13px; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: 3px 10px; border-radius: 999px; }
+.more-btn { border: 0; background: var(--fill); width: 100%; padding: 11px; border-radius: 12px; margin-top: 8px; color: var(--text-2); font-weight: 500; }
+
+/* 차트 */
+.chart-wrap { position: relative; }
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .axis { fill: var(--muted); font-size: 11px; }
+.chart .hit { fill: transparent; cursor: default; }
+.chart .hit:hover { fill: color-mix(in srgb, var(--text) 4%, transparent); }
+.legend-row { display: flex; gap: 14px; font-size: 13px; color: var(--text-2); margin-bottom: 10px; flex-wrap: wrap; }
+.legend-row span { display: inline-flex; align-items: center; gap: 6px; }
+.legend-row i { width: 10px; height: 10px; border-radius: 3px; background: var(--c); display: inline-block; }
+.legend-row i.line { height: 2px; width: 14px; border-radius: 2px; }
+.tip {
+  position: absolute; pointer-events: none; background: var(--surface); color: var(--text); border: 1px solid var(--fill-strong);
+  border-radius: 12px; padding: 10px 12px; font-size: 13px; box-shadow: 0 6px 20px rgba(0,0,0,.12); min-width: 150px; z-index: 3;
+  transform: translate(-50%, calc(-100% - 10px)); white-space: nowrap;
+}
+.tip b { display: block; margin-bottom: 4px; }
+.tip .r { display: flex; justify-content: space-between; gap: 14px; }
+.tip .r span { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); }
+.tip .r i { width: 8px; height: 8px; border-radius: 2px; background: var(--c); }
+details.table-view { margin-top: 10px; font-size: 13px; color: var(--muted); }
+details.table-view summary { cursor: pointer; }
+details.table-view table { width: 100%; border-collapse: collapse; margin-top: 8px; color: var(--text); }
+details.table-view th, details.table-view td { text-align: right; padding: 6px 4px; border-bottom: 1px solid var(--line); font-weight: 400; }
+details.table-view th:first-child, details.table-view td:first-child { text-align: left; }
+details.table-view th { color: var(--muted); }
+
+/* 상환 계획 */
+.plan-pick { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 16px; }
+.plan-sum { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.plan-sum > div { background: var(--fill); border-radius: 14px; padding: 12px 14px; }
+.plan-sum > div.on { background: var(--accent-soft); }
+.plan-sum .k { font-size: 13px; color: var(--muted); }
+.plan-sum .v { font-size: 18px; font-weight: 700; }
+.plan-sum .s { font-size: 13px; color: var(--text-2); }
+.plan-note { font-size: 13px; color: var(--muted); margin-top: 10px; }
+
+/* 정기 지출 */
+.rec-row .sub .tag { margin-left: 4px; }
+
 /* 더보기 */
 .more-row .avatar { border-radius: 12px; }
 
@@ -480,6 +540,10 @@ dialog::backdrop { background: var(--scrim); }
         <div class="block a-summary">
           <div class="rows" id="summary-rows"></div>
         </div>
+        <div class="block a-flow">
+          <div class="block-head"><h2>월별 흐름</h2><span class="aside">일회성 제외</span></div>
+          <div id="flow-chart"></div>
+        </div>
         <div class="block a-recent">
           <div class="block-head"><h2>최근 거래</h2></div>
           <div class="rows" id="home-recent"></div>
@@ -487,9 +551,14 @@ dialog::backdrop { background: var(--scrim); }
       </div>
       <div class="col">
         <div class="block a-today" id="today-block"></div>
+        <div class="block a-upcoming">
+          <div class="block-head"><h2>나갈 돈</h2><span class="payday-chip num" id="payday-chip"></span></div>
+          <div id="upcoming"></div>
+        </div>
         <div class="block a-env">
           <div class="block-head"><h2>봉투</h2><span class="aside num" id="home-left"></span></div>
           <div id="home-envelopes"></div>
+          <button class="more-btn hidden" type="button" id="env-toggle"></button>
         </div>
       </div>
     </section>
@@ -521,8 +590,20 @@ dialog::backdrop { background: var(--scrim); }
     <section class="view hidden" id="view-debt">
       <div class="block hero" id="debt-hero"></div>
       <div class="block">
+        <div class="block-head"><h2>상환 계획</h2><span class="aside">금리 높은 대출부터 더 갚을 때</span></div>
+        <div id="debt-plan"></div>
+      </div>
+      <div class="block">
         <div class="block-head"><h2>금리 높은 순</h2></div>
         <div id="debt-list"></div>
+      </div>
+    </section>
+
+    <section class="view hidden" id="view-recurring">
+      <div class="block">
+        <div class="block-head"><h2>매달 나가는 돈</h2><span class="aside num" id="rec-total"></span></div>
+        <div class="rows" id="rec-list"></div>
+        <div class="plan-note">대출 상환액은 부채 화면의 월 납입액을 그대로 씁니다.</div>
       </div>
     </section>
 
@@ -578,6 +659,7 @@ dialog::backdrop { background: var(--scrim); }
         <div class="rows">
           <button class="row more-row" type="button" data-goto="budget"><span class="avatar" style="--c:#00b386">봉</span><span class="body"><span class="title">봉투 배정</span><span class="sub">달마다 봉투에 넣을 금액</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
           <button class="row more-row" type="button" data-goto="debt"><span class="avatar" style="--c:#12a5b8">빚</span><span class="body"><span class="title">부채</span><span class="sub">대출 잔액과 금리</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+          <button class="row more-row" type="button" data-goto="recurring"><span class="avatar" style="--c:#e07a12">정</span><span class="body"><span class="title">정기 지출</span><span class="sub">월세, 구독, 공과금</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
           <button class="row more-row" type="button" data-goto="docs"><span class="avatar" style="--c:#3182f6">자</span><span class="body"><span class="title">자료</span><span class="sub">계약서, 평면도, 보증서</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
           <button class="row more-row" type="button" data-goto="notices"><span class="avatar" style="--c:#f59f00">공</span><span class="body"><span class="title">공지</span><span class="sub">둘이 함께 알아야 할 것</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
           <button class="row more-row" type="button" data-goto="notes"><span class="avatar" style="--c:#8b5cf6">메</span><span class="body"><span class="title">운영 메모</span><span class="sub">나만 보는 메모</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
@@ -612,6 +694,8 @@ dialog::backdrop { background: var(--scrim); }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="14" rx="2.5"/><path d="M3.5 8l8.5 5.5L20.5 8"/></svg>봉투 배정</button>
       <button type="button" class="desk-only" data-view="debt">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>부채</button>
+      <button type="button" class="desk-only" data-view="recurring">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4h-4"/></svg>정기 지출</button>
       <button type="button" class="desk-only" data-view="docs">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M3.5 6.5a1.5 1.5 0 0 1 1.5-1.5h4.5l2 2.5H19a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 19.5H5A1.5 1.5 0 0 1 3.5 18z"/></svg>자료</button>
       <button type="button" class="desk-only" data-view="notices">
@@ -771,6 +855,32 @@ dialog::backdrop { background: var(--scrim); }
   </form>
 </dialog>
 
+<dialog id="rec-dialog">
+  <form class="sheet" id="rec-form" method="dialog">
+    <h3 id="rec-dialog-title">정기 지출</h3>
+    <div class="amount-field"><input id="r-amount" inputmode="numeric" class="num" required placeholder="0" aria-label="금액"><span>원</span></div>
+    <div class="form">
+      <label class="full">이름<input id="r-name" required autocomplete="off" placeholder="예: 신림 월세"></label>
+      <label>언제<select id="r-when"><option value="day">매월 정한 날</option><option value="payday">월급날</option></select></label>
+      <label id="r-day-wrap">며칠<input id="r-day" type="number" min="1" max="31" inputmode="numeric"></label>
+      <label>봉투<select id="r-envelope"><option value="">없음</option></select></label>
+      <label>결제수단<input id="r-pay" list="dl-pay" autocomplete="off"></label>
+      <label>시작<input id="r-start" type="date" required></label>
+      <label>끝 (비우면 계속)<input id="r-end" type="date"></label>
+      <label class="full">메모<input id="r-memo" autocomplete="off"></label>
+      <div class="checks">
+        <label class="toggle"><input id="r-est" type="checkbox"><span>금액이 추정치</span></label>
+        <label class="toggle"><input id="r-active" type="checkbox" checked><span>사용 중</span></label>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn danger hidden" id="rec-delete" type="button">삭제</button>
+      <button class="btn" type="button" id="rec-cancel">닫기</button>
+      <button class="btn primary" type="submit">저장</button>
+    </div>
+  </form>
+</dialog>
+
 <datalist id="dl-doc-cats"></datalist>
 <datalist id="dl-sections"></datalist>
 <datalist id="dl-pay"></datalist>
@@ -843,6 +953,12 @@ const state = {
   docFilter: { q: '', cat: '' },
   editingDoc: null,
   docShared: true,
+  recurring: [],
+  monthly: [],
+  paydayDay: 25,
+  showAllEnv: false,
+  planExtra: 100000,
+  editingRec: null,
 };
 
 const TOGETHER = { email: null, display_name: '함께', color: '#8b5cf6' };
@@ -938,16 +1054,19 @@ sb.auth.onAuthStateChange((event) => {
 // 데이터 ---------------------------------------------------------------
 
 async function loadStatic() {
-  const [env, rules, debts, dl, settings] = await Promise.all([
+  const [env, rules, debts, dl, settings, recurring] = await Promise.all([
     sb.from('envelopes').select('*').order('sort_order'),
     sb.from('rules').select('*'),
     sb.from('debts').select('*'),
     sb.from('transactions').select('payment_method, category, subcategory, tags').order('date', { ascending: false }).limit(1000),
     sb.from('settings').select('*'),
+    sb.from('recurring').select('*').order('id'),
   ]);
-  for (const r of [env, rules, debts, dl, settings]) if (r.error) throw r.error;
+  for (const r of [env, rules, debts, dl, settings, recurring]) if (r.error) throw r.error;
   const setting = Object.fromEntries(settings.data.map(r => [r.key, r.value]));
   state.expectedIncome = Number(setting.expected_monthly_income || 0);
+  state.paydayDay = Number(setting.payday_day || 25);
+  state.recurring = recurring.data;
   state.envelopes = env.data;
   state.rules = rules.data.sort((a, b) => b.keyword.length - a.keyword.length);
   state.debts = debts.data;
@@ -960,6 +1079,7 @@ async function loadStatic() {
 
   const opts = state.envelopes.map(e => `<option>${esc(e.name)}</option>`).join('');
   $('#f-envelope').innerHTML = '<option value="">없음</option>' + opts;
+  $('#r-envelope').innerHTML = '<option value="">없음</option>' + opts;
   $('#tx-envelope').innerHTML = '<option value="">모든 봉투</option>' + opts;
   $('#f-debt').innerHTML = '<option value="">선택 안 함</option>' +
     state.debts.map(d => `<option value="${esc(d.id)}">${esc(d.id)} · ${esc(d.product)}</option>`).join('');
@@ -972,15 +1092,17 @@ function fillDatalist(sel, values) {
 async function loadMonth() {
   $('#month-label').textContent = monthName(state.month);
   const { start, end } = monthRange(state.month);
-  const [tx, budgets, summary, debts, events] = await Promise.all([
+  const [tx, budgets, summary, debts, events, monthly] = await Promise.all([
     sb.from('transactions').select('*').gte('date', start).lt('date', end)
       .order('date', { ascending: false }).order('id', { ascending: false }),
     sb.from('monthly_envelope_summary').select('*').eq('month', start),
     sb.from('monthly_summary').select('*').eq('month', start).maybeSingle(),
     sb.from('debts').select('*'),
     sb.from('events').select('*').gte('date', start).lt('date', end),
+    sb.from('monthly_summary').select('*').order('month'),
   ]);
-  for (const r of [tx, budgets, summary, debts, events]) if (r.error) return fail(r.error);
+  for (const r of [tx, budgets, summary, debts, events, monthly]) if (r.error) return fail(r.error);
+  state.monthly = monthly.data;
   state.events = events.data.sort(eventOrder);
   state.tx = tx.data.sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
   state.budgets = budgets.data;
@@ -993,6 +1115,9 @@ async function loadMonth() {
 
 function render() {
   renderToday();
+  renderUpcoming();
+  renderFlow();
+  renderRecurring();
   renderSchedule();
   renderHome();
   renderTx();
@@ -1065,8 +1190,15 @@ function renderHome() {
   const leftTotal = budgeted.reduce((a, r) => a + r.remaining, 0);
   $('#home-left').textContent = !budgeted.length ? ''
     : leftTotal < 0 ? `${fmt(-leftTotal)}원 초과` : `${fmt(leftTotal)}원 남음`;
-  $('#home-envelopes').innerHTML = rows.filter(r => r.available || r.spent).map(r => envHtml(r)).join('')
-    || '<div class="empty">이번 달 기록이 없어요</div>';
+  // 넘친 봉투, 거의 다 쓴 봉투부터
+  const urgency = r => r.available > 0 ? r.spent / r.available : (r.spent > 0 ? 0.5 : -1);
+  const shown = rows.filter(r => r.available || r.spent).sort((a, b) => urgency(b) - urgency(a));
+  const LIMIT = 4;
+  const visible = state.showAllEnv ? shown : shown.slice(0, LIMIT);
+  $('#home-envelopes').innerHTML = visible.map(r => envHtml(r)).join('') || '<div class="empty">이번 달 기록이 없어요</div>';
+  const hiddenCount = shown.length - LIMIT;
+  $('#env-toggle').classList.toggle('hidden', hiddenCount <= 0);
+  $('#env-toggle').textContent = state.showAllEnv ? '접기' : `봉투 ${hiddenCount}개 더 보기`;
   $('#home-recent').innerHTML = state.tx.slice(0, 5).map(txHtml).join('') || '<div class="empty">거래가 없어요</div>';
 }
 
@@ -1130,6 +1262,7 @@ function renderBudget() {
 }
 
 function renderDebt() {
+  renderPlan();
   const list = [...state.debts].sort((a, b) => (Number(b.rate) || 0) - (Number(a.rate) || 0));
   const total = list.reduce((a, d) => a + Number(d.balance || 0), 0);
   const principal = list.reduce((a, d) => a + Number(d.principal || 0), 0);
@@ -1266,9 +1399,9 @@ document.addEventListener('click', e => {
 
 // 이동 ---------------------------------------------------------------
 
-const VIEW_TITLES = { debt: '부채', notes: '운영 메모', notices: '공지', docs: '자료', chores: '집안일', more: '더보기' };
-const TAB_OF = { budget: 'more', debt: 'more', notes: 'more', notices: 'more', docs: 'more' };
-const FAB_LABEL = { home: '기록하기', tx: '기록하기', schedule: '일정 추가', chores: '집안일 추가', notes: '메모 추가', notices: '공지 쓰기', docs: '자료 추가' };
+const VIEW_TITLES = { debt: '부채', notes: '운영 메모', notices: '공지', docs: '자료', recurring: '정기 지출', chores: '집안일', more: '더보기' };
+const TAB_OF = { budget: 'more', debt: 'more', notes: 'more', notices: 'more', docs: 'more', recurring: 'more' };
+const FAB_LABEL = { home: '기록하기', tx: '기록하기', schedule: '일정 추가', chores: '집안일 추가', notes: '메모 추가', notices: '공지 쓰기', docs: '자료 추가', recurring: '정기 지출 추가' };
 
 function go(view) {
   state.view = view;
@@ -1284,6 +1417,8 @@ function go(view) {
   $('#view-title').classList.toggle('hidden', !fixedTitle);
   $('#view-title').textContent = fixedTitle || '';
   if (view === 'notes') renderNotes();
+  if (view === 'debt') renderPlan();
+  if (view === 'home') renderFlow();
   window.scrollTo(0, 0);
 }
 
@@ -1394,6 +1529,7 @@ $('#add-tx').addEventListener('click', () => {
   else if (state.view === 'notes') openMemo('note', null);
   else if (state.view === 'notices') openMemo('notice', null);
   else if (state.view === 'docs') openDoc(null);
+  else if (state.view === 'recurring') openRec(null);
   else if (state.view === 'chores') openChore(null);
   else openTx(null);
 });
@@ -1863,6 +1999,336 @@ for (const dlg of $$('dialog')) {
   dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
 }
 
+// 나갈 돈 -------------------------------------------------------------
+
+const isoOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+// 매월 정한 날의 월급날. 주말이면 앞 금요일로 당긴다 (공휴일은 반영하지 않음)
+function paydayOf(y, m) {
+  const last = new Date(y, m, 0).getDate();
+  const d = new Date(y, m - 1, Math.min(state.paydayDay, last));
+  if (d.getDay() === 6) d.setDate(d.getDate() - 1);
+  if (d.getDay() === 0) d.setDate(d.getDate() - 2);
+  return isoOf(d);
+}
+function nextPayday(from) {
+  const [y, m] = from.split('-').map(Number);
+  const p = paydayOf(y, m);
+  if (p >= from) return p;
+  return m === 12 ? paydayOf(y + 1, 1) : paydayOf(y, m + 1);
+}
+
+// from~to 사이에 나갈 정기 지출과 대출 상환
+function outflows(from, to) {
+  const out = [];
+  const [fy, fm] = from.split('-').map(Number);
+  const [ty, tm] = to.split('-').map(Number);
+  for (let y = fy, m = fm; y < ty || (y === ty && m <= tm); m === 12 ? (y++, m = 1) : m++) {
+    const last = new Date(y, m, 0).getDate();
+    const payday = paydayOf(y, m);
+    const at = day => `${y}-${pad(m)}-${pad(Math.min(day, last))}`;
+    for (const r of state.recurring) {
+      if (!r.active) continue;
+      const date = r.on_payday ? payday : r.day ? at(r.day) : null;
+      if (!date || date < r.start_on || (r.end_on && date > r.end_on)) continue;
+      out.push({ date, name: r.name, amount: Number(r.amount), envelope: r.envelope, estimated: r.estimated, rec: r.id });
+    }
+    const onPayday = state.debts.filter(d => d.pay_on_payday && Number(d.balance) > 0 && d.monthly_payment);
+    if (onPayday.length) {
+      out.push({ date: payday, name: `대출 상환 ${onPayday.length}건`, amount: onPayday.reduce((a, d) => a + Number(d.monthly_payment), 0),
+        envelope: '부채상환', estimated: false, loans: true });
+    }
+    for (const d of state.debts.filter(d => !d.pay_on_payday && Number(d.balance) > 0 && d.monthly_payment && d.due_day)) {
+      out.push({ date: at(d.due_day), name: `${d.id} 상환`, amount: Number(d.monthly_payment), envelope: '부채상환', estimated: false, loans: true });
+    }
+  }
+  return out.filter(o => o.date >= from && o.date <= to).sort((a, b) => a.date.localeCompare(b.date) || b.amount - a.amount);
+}
+
+function upRow(o) {
+  return `<div class="up-row">
+    <span class="d num">${mmdd(o.date)}</span><span class="dot" style="--c:${envColor(o.envelope)}"></span>
+    <span class="n">${esc(o.name)}${o.estimated ? ' <span class="tag">추정</span>' : ''}</span>
+    <span class="a num">${fmt(o.amount)}원</span></div>`;
+}
+
+function renderUpcoming() {
+  const t = today();
+  const payday = nextPayday(t);
+  const dday = daysBetween(t, payday);
+  $('#payday-chip').textContent = dday === 0 ? '오늘 월급날' : `월급날 ${mmdd(payday)} · D-${dday}`;
+  const before = outflows(t, addDays(payday, -1));
+  const onDay = outflows(payday, payday);
+  const sum = list => list.reduce((a, o) => a + o.amount, 0);
+  let html = '';
+  html += `<div class="up-group"><span>월급날 전까지</span><span class="num">${fmt(sum(before))}원</span></div>`;
+  html += before.map(upRow).join('') || '<div class="up-row"><span class="n" style="color:var(--muted)">나갈 정기 지출이 없어요</span></div>';
+  html += `<div class="up-group"><span>월급날 ${mmdd(payday)}</span><span class="num">${fmt(sum(onDay))}원</span></div>`;
+  html += onDay.map(upRow).join('');
+  const nextMonth = outflows(addDays(payday, 1), addDays(payday, 31)).slice(0, 4);
+  if (nextMonth.length) {
+    html += `<div class="up-group"><span>그다음</span></div>` + nextMonth.map(upRow).join('');
+  }
+  $('#upcoming').innerHTML = html;
+}
+
+$('#env-toggle').addEventListener('click', () => { state.showAllEnv = !state.showAllEnv; renderHome(); });
+
+// 월별 흐름 차트 -------------------------------------------------------
+
+const compactWon = n => n >= 1e8 ? (n / 1e8).toFixed(1).replace(/\.0$/, '') + '억' : n >= 1e4 ? Math.round(n / 1e4).toLocaleString('ko-KR') + '만' : String(n);
+
+// 차트를 실제 폭으로 그려 글씨 크기가 늘거나 줄지 않게 한다
+function chartWidth(sel) {
+  return Math.max(300, Math.round($(sel).clientWidth || 560));
+}
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { if (state.monthly.length) renderFlow(); if (state.view === 'debt') renderPlan(); }, 150);
+});
+
+function niceMax(v) {
+  if (v <= 0) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  return [1, 2, 2.5, 5, 10].map(k => k * p).find(c => c >= v);
+}
+
+function renderFlow() {
+  const rows = state.monthly.slice(-6).map(m => ({
+    month: m.month, income: Number(m.income_regular || 0), expense: Number(m.expense_regular || 0), debt: Number(m.debt_repaid || 0),
+  }));
+  if (!rows.length) { $('#flow-chart').innerHTML = '<div class="empty">아직 기록이 없어요</div>'; return; }
+  const W = chartWidth('#flow-chart'), H = 220, L = 44, R = 8, T = 10, B = 26;
+  const max = niceMax(Math.max(...rows.flatMap(r => [r.income, r.expense])));
+  const y = v => T + (H - T - B) * (1 - v / max);
+  const band = (W - L - R) / rows.length;
+  const bw = Math.min(24, band / 3);
+  const ticks = [0, max / 4, max / 2, (max * 3) / 4, max];
+  const bar = (x, v, c) => {
+    const top = y(v), h = Math.max(0, H - B - top), r = Math.min(4, h);
+    return h <= 0 ? '' : `<path d="M${x},${H - B} V${top + r} Q${x},${top} ${x + r},${top} H${x + bw - r} Q${x + bw},${top} ${x + bw},${top + r} V${H - B} Z" fill="var(${c})"/>`;
+  };
+  let svg = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="월별 평소 수입과 지출">`;
+  for (const tv of ticks) {
+    svg += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(tv)}" y2="${y(tv)}"/>`;
+    svg += `<text class="axis num" x="${L - 6}" y="${y(tv) + 4}" text-anchor="end">${compactWon(tv)}</text>`;
+  }
+  rows.forEach((r, i) => {
+    const cx = L + band * i + band / 2;
+    svg += bar(cx - bw - 1, r.income, '--s-income') + bar(cx + 1, r.expense, '--s-expense');
+    svg += `<text class="axis" x="${cx}" y="${H - 8}" text-anchor="middle">${Number(r.month.slice(5, 7))}월</text>`;
+    svg += `<rect class="hit" data-i="${i}" x="${L + band * i}" y="${T}" width="${band}" height="${H - T - B}" rx="8"/>`;
+  });
+  svg += '</svg>';
+  const table = `<details class="table-view"><summary>표로 보기</summary><table>
+    <tr><th>월</th><th>수입</th><th>지출</th><th>수지</th><th>부채 상환</th></tr>
+    ${rows.map(r => `<tr><td>${Number(r.month.slice(5, 7))}월</td><td class="num">${fmt(r.income)}</td><td class="num">${fmt(r.expense)}</td>
+      <td class="num">${signedWon(r.income - r.expense)}</td><td class="num">${fmt(r.debt)}</td></tr>`).join('')}
+  </table></details>`;
+  $('#flow-chart').innerHTML = `<div class="legend-row"><span><i style="--c:var(--s-income)"></i>평소 수입</span><span><i style="--c:var(--s-expense)"></i>평소 지출</span></div>
+    <div class="chart-wrap">${svg}<div class="tip hidden" id="flow-tip"></div></div>${table}`;
+  const wrap = $('#flow-chart .chart-wrap');
+  wrap.addEventListener('mousemove', e => {
+    const hit = e.target.closest('.hit');
+    const tip = $('#flow-tip');
+    if (!hit) { tip.classList.add('hidden'); return; }
+    const r = rows[Number(hit.dataset.i)];
+    const box = wrap.getBoundingClientRect();
+    tip.innerHTML = `<b>${Number(r.month.slice(5, 7))}월</b>
+      <div class="r"><span><i style="--c:var(--s-income)"></i>수입</span><span class="num">${fmt(r.income)}원</span></div>
+      <div class="r"><span><i style="--c:var(--s-expense)"></i>지출</span><span class="num">${fmt(r.expense)}원</span></div>
+      <div class="r"><span>수지</span><span class="num">${signedWon(r.income - r.expense)}</span></div>
+      <div class="r"><span>부채 상환</span><span class="num">${fmt(r.debt)}원</span></div>`;
+    tip.style.left = Math.min(Math.max(e.clientX - box.left, 80), box.width - 80) + 'px';
+    tip.style.top = (e.clientY - box.top) + 'px';
+    tip.classList.remove('hidden');
+  });
+  wrap.addEventListener('mouseleave', () => $('#flow-tip').classList.add('hidden'));
+  wrap.addEventListener('click', e => wrap.dispatchEvent(new MouseEvent('mousemove', e)));
+}
+
+// 부채 상환 계획 -------------------------------------------------------
+
+// 매달 이자를 붙이고 납입액을 뺀다. extra는 금리 높은 대출부터, 다 갚은 대출의 납입액도 extra에 더한다
+function simulate(extra) {
+  const loans = state.debts
+    .filter(d => Number(d.balance) > 0 && d.monthly_payment && d.rate != null)
+    .map(d => ({ id: d.id, bal: Number(d.balance), rate: Number(d.rate) / 1200, pay: Number(d.monthly_payment), end: null, interest: 0 }))
+    .filter(l => l.pay - l.bal * l.rate > l.bal / 600); // 이자만 내는 거치 대출(원금이 거의 안 줄어듦)은 뺀다
+  let month = 0;
+  while (loans.some(l => l.end === null) && month < 600) {
+    month++;
+    let pool = extra;
+    for (const l of loans) if (l.end !== null) pool += l.pay * (extra > 0 ? 1 : 0);
+    for (const l of loans.filter(l => l.end === null)) {
+      const it = l.bal * l.rate;
+      l.interest += it;
+      l.bal = l.bal + it - Math.min(l.pay, l.bal + it);
+      if (l.bal <= 0.5) { l.bal = 0; l.end = month; }
+    }
+    for (const l of loans.filter(l => l.end === null).sort((a, b) => b.rate - a.rate)) {
+      if (pool <= 0) break;
+      const p = Math.min(pool, l.bal);
+      l.bal -= p; pool -= p;
+      if (l.bal <= 0.5) { l.bal = 0; l.end = month; }
+    }
+  }
+  return { loans, months: Math.max(0, ...loans.map(l => l.end || 600)), interest: loans.reduce((a, l) => a + l.interest, 0) };
+}
+
+const monthLabel = n => {
+  const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + n);
+  return `${d.getFullYear()}년 ${d.getMonth() + 1}월`;
+};
+
+function renderPlan() {
+  const base = simulate(0), plan = simulate(state.planExtra);
+  const excluded = state.debts.filter(d => Number(d.balance) > 0 && !base.loans.some(l => l.id === d.id));
+  const chips = [0, 50000, 100000, 200000, 300000].map(v =>
+    `<button class="chip" type="button" data-extra="${v}" aria-pressed="${state.planExtra === v}">${v ? '+' + compactWon(v) + '원' : '지금처럼'}</button>`).join('');
+  const saved = base.interest - plan.interest;
+  const sum = `<div class="plan-sum">
+      <div><div class="k">지금처럼 갚으면</div><div class="v num">${monthLabel(base.months)}</div><div class="s num">앞으로 이자 ${won(base.interest)}</div></div>
+      <div class="${state.planExtra ? 'on' : ''}"><div class="k">${state.planExtra ? `매달 ${compactWon(state.planExtra)}원 더 갚으면` : '더 갚을 금액을 골라 보세요'}</div>
+        <div class="v num">${state.planExtra ? monthLabel(plan.months) : '-'}</div>
+        <div class="s num">${state.planExtra ? `${base.months - plan.months}개월 빨리 · 이자 ${won(saved)} 절약` : ''}</div></div>
+    </div>`;
+  // 대출별 끝나는 때: 막대는 계획, 세로선은 지금처럼
+  const order = [...plan.loans].sort((a, b) => b.rate - a.rate);
+  const maxM = Math.max(base.months, 12);
+  const W = chartWidth('#debt-plan'), rowH = 30, L = 64, R = 76, H = order.length * rowH + 24;
+  const x = m => L + (W - L - R) * (m / maxM);
+  let svg = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="대출별 다 갚는 시기">`;
+  const step = Math.max(1, Math.ceil(maxM / 12 / 6));
+  for (let yr = 0; yr * 12 <= maxM; yr += step) {
+    svg += `<line class="grid" x1="${x(yr * 12)}" x2="${x(yr * 12)}" y1="0" y2="${H - 20}"/>`;
+    svg += `<text class="axis" x="${x(yr * 12)}" y="${H - 6}" text-anchor="middle">${yr === 0 ? '지금' : yr + '년'}</text>`;
+  }
+  order.forEach((l, i) => {
+    const b = base.loans.find(z => z.id === l.id);
+    const yy = i * rowH + 6, h = 14;
+    l.end ??= 600; b.end ??= 600;
+    const w = Math.max(4, x(l.end) - L);
+    svg += `<text class="axis" x="${L - 8}" y="${yy + 11}" text-anchor="end" style="fill:var(--text-2);font-size:12px">${esc(l.id)}</text>`;
+    svg += `<path d="M${L},${yy} H${L + w - 4} Q${L + w},${yy} ${L + w},${yy + 4} V${yy + h - 4} Q${L + w},${yy + h} ${L + w - 4},${yy + h} H${L} Z" fill="var(--s-debt)"/>`;
+    if (state.planExtra && b.end !== l.end) svg += `<line x1="${x(b.end)}" x2="${x(b.end)}" y1="${yy - 3}" y2="${yy + h + 3}" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"/>`;
+    const labelX = Math.max(L + w, state.planExtra ? x(b.end) : 0) + 6;
+    svg += `<text class="axis num" x="${labelX}" y="${yy + 11}" style="fill:var(--text-2)">${Math.floor(l.end / 12) ? Math.floor(l.end / 12) + '년 ' : ''}${l.end % 12 ? (l.end % 12) + '개월' : ''}</text>`;
+    svg += `<rect class="hit" data-loan="${esc(l.id)}" x="0" y="${yy - 6}" width="${W}" height="${rowH}" rx="6"/>`;
+  });
+  svg += '</svg>';
+  const legend = `<div class="legend-row"><span><i style="--c:var(--s-debt)"></i>${state.planExtra ? '더 갚을 때' : '지금처럼'} 다 갚는 시기</span>
+    ${state.planExtra ? '<span><i class="line" style="--c:var(--muted)"></i>지금처럼일 때</span>' : ''}</div>`;
+  const note = `<div class="plan-note">원리금균등 기준으로 계산한 대략적인 값이에요. 원금균등 대출은 납입액이 줄어들어 실제로는 조금 늦어질 수 있어요.
+    ${excluded.length ? `계산에서 뺀 대출: ${esc(excluded.map(d => d.id).join(', '))} (거치 중이거나 납입액·금리 미확인)` : ''}</div>`;
+  $('#debt-plan').innerHTML = `<div class="plan-pick">${chips}</div>${sum}${legend}<div class="chart-wrap">${svg}<div class="tip hidden" id="plan-tip"></div></div>${note}`;
+  const wrap = $('#debt-plan .chart-wrap');
+  const show = e => {
+    const hit = e.target.closest('.hit');
+    const tip = $('#plan-tip');
+    if (!hit) { tip.classList.add('hidden'); return; }
+    const l = plan.loans.find(z => z.id === hit.dataset.loan), b = base.loans.find(z => z.id === hit.dataset.loan);
+    const d = state.debts.find(z => z.id === l.id);
+    const box = wrap.getBoundingClientRect();
+    tip.innerHTML = `<b>${esc(l.id)} · 연 ${Number(d.rate)}%</b>
+      <div class="r"><span>지금처럼</span><span class="num">${monthLabel(b.end)}</span></div>
+      ${state.planExtra ? `<div class="r"><span>더 갚으면</span><span class="num">${monthLabel(l.end)}</span></div>` : ''}
+      <div class="r"><span>약정 만기</span><span class="num">${d.maturity ? d.maturity.slice(0, 7).replace('-', '년 ') + '월' : '-'}</span></div>`;
+    tip.style.left = Math.min(Math.max(e.clientX - box.left, 90), box.width - 90) + 'px';
+    tip.style.top = (e.clientY - box.top) + 'px';
+    tip.classList.remove('hidden');
+  };
+  wrap.addEventListener('mousemove', show);
+  wrap.addEventListener('click', show);
+  wrap.addEventListener('mouseleave', () => $('#plan-tip').classList.add('hidden'));
+}
+$('#debt-plan').addEventListener('click', e => {
+  const v = e.target.closest('[data-extra]')?.dataset.extra;
+  if (v === undefined) return;
+  state.planExtra = Number(v);
+  renderPlan();
+});
+
+// 정기 지출 관리 -------------------------------------------------------
+
+function renderRecurring() {
+  const list = state.recurring;
+  const active = list.filter(r => r.active && (!r.end_on || r.end_on >= today()));
+  const loans = state.debts.filter(d => Number(d.balance) > 0 && d.monthly_payment).reduce((a, d) => a + Number(d.monthly_payment), 0);
+  $('#rec-total').textContent = `월 ${won(active.reduce((a, r) => a + Number(r.amount), 0) + loans)} (대출 포함)`;
+  $('#rec-list').innerHTML = list.map(r => {
+    const when = r.on_payday ? '월급날' : `매월 ${r.day}일`;
+    const sub = [when, r.envelope, r.payment_method, r.start_on > today() ? `${mmdd(r.start_on)}부터` : null, r.end_on ? `${mmdd(r.end_on)}까지` : null].filter(Boolean).join(' · ');
+    return `<button class="row rec-row" type="button" data-rec="${r.id}" ${r.active ? '' : 'style="opacity:.5"'}>
+      <span class="avatar" style="--c:${envColor(r.envelope)}">${esc(r.name.slice(0, 1))}</span>
+      <span class="body"><span class="title">${esc(r.name)}</span><span class="sub">${esc(sub)}${r.estimated ? '<span class="tag">추정</span>' : ''}${r.active ? '' : '<span class="tag">멈춤</span>'}</span></span>
+      <span class="end"><span class="amt num">${fmt(r.amount)}원</span></span></button>`;
+  }).join('') + `<button class="row rec-row" type="button" data-goto-view="debt">
+      <span class="avatar" style="--c:${envColor('부채상환')}">빚</span>
+      <span class="body"><span class="title">대출 상환</span><span class="sub">부채 화면 기준 · 대부분 월급날</span></span>
+      <span class="end"><span class="amt num">${fmt(loans)}원</span></span></button>`;
+}
+$('#rec-list').addEventListener('click', e => {
+  if (e.target.closest('[data-goto-view]')) return go('debt');
+  const id = e.target.closest('[data-rec]')?.dataset.rec;
+  if (id) openRec(state.recurring.find(r => String(r.id) === id));
+});
+
+function syncRecWhen() { $('#r-day-wrap').classList.toggle('hidden', $('#r-when').value === 'payday'); }
+$('#r-when').addEventListener('change', syncRecWhen);
+$('#r-amount').addEventListener('input', e => { const n = parseAmount(e.target.value); e.target.value = n ? fmt(n) : ''; });
+
+function openRec(r) {
+  state.editingRec = r || null;
+  $('#rec-dialog-title').textContent = r ? '정기 지출 고치기' : '정기 지출 추가';
+  $('#rec-delete').classList.toggle('hidden', !r);
+  $('#r-amount').value = r ? fmt(r.amount) : '';
+  $('#r-name').value = r?.name || '';
+  $('#r-when').value = r?.on_payday ? 'payday' : 'day';
+  $('#r-day').value = r?.day || '';
+  $('#r-envelope').value = r?.envelope || '고정비';
+  $('#r-pay').value = r?.payment_method || '';
+  $('#r-start').value = r?.start_on || today();
+  $('#r-end').value = r?.end_on || '';
+  $('#r-memo').value = r?.memo || '';
+  $('#r-est').checked = !!r?.estimated;
+  $('#r-active').checked = r ? r.active : true;
+  syncRecWhen();
+  $('#rec-dialog').showModal();
+}
+$('#rec-cancel').addEventListener('click', () => $('#rec-dialog').close());
+$('#rec-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const onPayday = $('#r-when').value === 'payday';
+  const row = {
+    name: $('#r-name').value.trim(), amount: parseAmount($('#r-amount').value),
+    on_payday: onPayday, day: onPayday ? null : Number($('#r-day').value) || null,
+    envelope: $('#r-envelope').value || null, payment_method: $('#r-pay').value.trim() || null,
+    start_on: $('#r-start').value, end_on: $('#r-end').value || null, memo: $('#r-memo').value.trim() || null,
+    estimated: $('#r-est').checked, active: $('#r-active').checked,
+  };
+  if (!onPayday && !row.day) return toast('며칠에 나가는지 적어 주세요');
+  const { error } = state.editingRec
+    ? await sb.from('recurring').update(row).eq('id', state.editingRec.id)
+    : await sb.from('recurring').insert(row);
+  if (error) return fail(error);
+  $('#rec-dialog').close();
+  toast('저장했어요');
+  await loadStatic();
+  render();
+});
+$('#rec-delete').addEventListener('click', async () => {
+  const r = state.editingRec;
+  if (!r || !confirm(`‘${r.name}’를 지울까요? 잠깐 멈추려면 '사용 중'을 끄면 돼요.`)) return;
+  const { error } = await sb.from('recurring').delete().eq('id', r.id);
+  if (error) return fail(error);
+  $('#rec-dialog').close();
+  toast('지웠어요');
+  await loadStatic();
+  render();
+});
+
 // 자료 ---------------------------------------------------------------
 
 const DOC_CATS = ['집·이사', '금융', '보험', '가전·보증서', '건강', '기타'];
@@ -2092,7 +2558,7 @@ $('#doc-delete').addEventListener('click', async () => {
 // 데이터: Supabase Realtime으로 변경을 받고, 놓친 경우를 위해 1분마다 한 번 더 확인한다.
 // 화면: 이 페이지 파일이 다시 배포되면 알아채고 새로고침한다.
 
-const MONTH_TABLES = new Set(['transactions', 'budgets', 'debts', 'events', 'settings']);
+const MONTH_TABLES = new Set(['transactions', 'budgets', 'debts', 'events', 'settings', 'recurring']);
 const CHORE_TABLES = new Set(['chores', 'chore_logs', 'events']);
 let pending = { month: false, chores: false, statics: false };
 let refreshTimer;
@@ -2104,7 +2570,7 @@ function busy() {
 function scheduleRefresh(table) {
   if (!table || MONTH_TABLES.has(table)) pending.month = true;
   if (!table || CHORE_TABLES.has(table)) pending.chores = true;
-  if (table === 'settings' || table === 'debts') pending.statics = true;
+  if (table === 'settings' || table === 'debts' || table === 'recurring') pending.statics = true;
   if (!table || table === 'private_notes') pending.private = true;
   if (!table || table === 'notices') pending.notices = true;
   if (!table || table === 'docs' || table === 'doc_files') pending.docs = true;
