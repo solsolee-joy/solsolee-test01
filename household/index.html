@@ -48,6 +48,7 @@
   --f-title: "OngleipParkDahyeon", "Gowun Dodum", "Pretendard Variable", Pretendard, "Noto Sans KR", sans-serif;
   --sketch: #8a7560;
   --f-num: "Nanum Gothic Coding", ui-monospace, monospace;
+  --i-line: #4a3a2c; --i-cream: #fbf3e4; --i-terra: #d98b5f; --i-wood: #b98b5e; --i-blue: #9bb8d3; --i-olive: #9db27a; --i-mustard: #e6bf62; --i-rose: #e9aeb1;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -65,8 +66,8 @@
     --amber: #e3a85a;
     --amber-soft: #43331f;
     --on-accent: #1d1814;
-  --sketch: #a8957d;
     --sketch: #a8957d;
+    --i-line: #eadfce; --i-cream: #d9cbb4; --i-terra: #c27a52; --i-wood: #9c7550; --i-blue: #7f9fbd; --i-olive: #86a065; --i-mustard: #cfa64f; --i-rose: #c9898e;
     --plus: #8cb0dc;
     --minus: #e08a95;
     --warn: #e3a85a;
@@ -93,6 +94,8 @@
   --amber: #e3a85a;
   --amber-soft: #43331f;
   --on-accent: #1d1814;
+  --sketch: #a8957d;
+  --i-line: #eadfce; --i-cream: #d9cbb4; --i-terra: #c27a52; --i-wood: #9c7550; --i-blue: #7f9fbd; --i-olive: #86a065; --i-mustard: #cfa64f; --i-rose: #c9898e;
   --plus: #8cb0dc;
   --minus: #e08a95;
   --warn: #e3a85a;
@@ -602,6 +605,17 @@ details.table-view th { color: var(--muted); }
 .placeholder { text-align: center; color: var(--muted); padding: 32px 16px; font-size: 15px; }
 .placeholder b { display: block; color: var(--text); font-size: 17px; margin-bottom: 4px; }
 
+/* 빈티지 소품 아이콘 */
+.ico { width: 24px; height: 24px; display: inline-block; vertical-align: middle; overflow: visible; }
+.ico * { fill: none; stroke: var(--i-line); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.ico .f-cream { fill: var(--i-cream); } .ico .f-terra { fill: var(--i-terra); } .ico .f-wood { fill: var(--i-wood); }
+.ico .f-blue { fill: var(--i-blue); } .ico .f-olive { fill: var(--i-olive); } .ico .f-mustard { fill: var(--i-mustard); }
+.ico .f-rose { fill: var(--i-rose); }
+.avatar .ico { width: 26px; height: 26px; }
+nav.tabs button .ico { opacity: .6; filter: saturate(.45); transition: opacity .15s, filter .15s, transform .15s; }
+nav.tabs button[aria-current="page"] .ico { opacity: 1; filter: none; transform: rotate(-4deg) scale(1.08); }
+.showcase-btn .ico { width: 20px; height: 20px; }
+
 /* 큰 금액은 타자기 느낌 숫자 */
 .hero .big, .hero .split .v, .env .left, .debt .bal, .plan-sum .v, .up-row .a, .row .end .amt, .totals b, .up-group .num {
   font-family: var(--f-num); letter-spacing: -0.03em;
@@ -690,7 +704,7 @@ body {
       </div>
       <h1 class="view-title hidden" id="view-title"></h1>
       <button class="text-btn showcase-btn" id="showcase-toggle" type="button" aria-pressed="false" title="인스타 촬영용으로 금액을 가려요">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span>보여주기</span></button>
+        <span data-ic="camera"></span><span class="sc-label">보여주기</span></button>
       <span class="me hidden" id="me"></span>
     </div>
   </header>
@@ -823,12 +837,12 @@ body {
     <section class="view hidden" id="view-more">
       <div class="block">
         <div class="rows">
-          <button class="row more-row" type="button" data-goto="budget"><span class="avatar" style="--c:#5f7a45">봉</span><span class="body"><span class="title">봉투 배정</span><span class="sub">달마다 봉투에 넣을 금액</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
-          <button class="row more-row" type="button" data-goto="debt"><span class="avatar" style="--c:#3f7f74">빚</span><span class="body"><span class="title">부채</span><span class="sub">대출 잔액과 금리</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
-          <button class="row more-row" type="button" data-goto="recurring"><span class="avatar" style="--c:#c0762e">정</span><span class="body"><span class="title">정기 지출</span><span class="sub">월세, 구독, 공과금</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
-          <button class="row more-row" type="button" data-goto="docs"><span class="avatar" style="--c:#4f78a6">자</span><span class="body"><span class="title">자료</span><span class="sub">계약서, 평면도, 보증서</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
-          <button class="row more-row" type="button" data-goto="notices"><span class="avatar" style="--c:#b88a2a">공</span><span class="body"><span class="title">공지</span><span class="sub">둘이 함께 알아야 할 것</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
-          <button class="row more-row" type="button" data-goto="notes"><span class="avatar" style="--c:#7c5c9a">메</span><span class="body"><span class="title">운영 메모</span><span class="sub">나만 보는 메모</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+          <button class="row more-row" type="button" data-goto="budget"><span class="avatar" style="--c:#5f7a45"><span data-ic="envelope"></span></span><span class="body"><span class="title">봉투 배정</span><span class="sub">달마다 봉투에 넣을 금액</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+          <button class="row more-row" type="button" data-goto="debt"><span class="avatar" style="--c:#3f7f74"><span data-ic="coins"></span></span><span class="body"><span class="title">부채</span><span class="sub">대출 잔액과 금리</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+          <button class="row more-row" type="button" data-goto="recurring"><span class="avatar" style="--c:#c0762e"><span data-ic="clock"></span></span><span class="body"><span class="title">정기 지출</span><span class="sub">월세, 구독, 공과금</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+          <button class="row more-row" type="button" data-goto="docs"><span class="avatar" style="--c:#4f78a6"><span data-ic="folder"></span></span><span class="body"><span class="title">자료</span><span class="sub">계약서, 평면도, 보증서</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+          <button class="row more-row" type="button" data-goto="notices"><span class="avatar" style="--c:#b88a2a"><span data-ic="mailbox"></span></span><span class="body"><span class="title">공지</span><span class="sub">둘이 함께 알아야 할 것</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+          <button class="row more-row" type="button" data-goto="notes"><span class="avatar" style="--c:#7c5c9a"><span data-ic="memo"></span></span><span class="body"><span class="title">운영 메모</span><span class="sub">나만 보는 메모</span></span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
         </div>
       </div>
       <div class="block">
@@ -846,28 +860,28 @@ body {
   <nav class="tabs">
     <div class="wrap">
       <button type="button" data-view="home" aria-current="page">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M3.5 10.2 12 3.5l8.5 6.7V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z"/></svg>홈</button>
+        <span data-ic="home"></span>홈</button>
       <button type="button" data-view="tx">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>내역</button>
+        <span data-ic="ledger"></span>내역</button>
       <button type="button" data-view="schedule">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke-linecap="round"/></svg>일정</button>
+        <span data-ic="calendar"></span>일정</button>
       <button type="button" data-view="chores">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>집안일</button>
+        <span data-ic="can"></span>집안일</button>
       <button type="button" data-view="more">
-        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5.5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18.5" cy="12" r="1.8"/></svg>더보기</button>
+        <span data-ic="buttons"></span>더보기</button>
       <div class="nav-sep desk-only"></div>
       <button type="button" class="desk-only" data-view="budget">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="14" rx="2.5"/><path d="M3.5 8l8.5 5.5L20.5 8"/></svg>봉투 배정</button>
+        <span data-ic="envelope"></span>봉투 배정</button>
       <button type="button" class="desk-only" data-view="debt">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>부채</button>
+        <span data-ic="coins"></span>부채</button>
       <button type="button" class="desk-only" data-view="recurring">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4h-4"/></svg>정기 지출</button>
+        <span data-ic="clock"></span>정기 지출</button>
       <button type="button" class="desk-only" data-view="docs">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M3.5 6.5a1.5 1.5 0 0 1 1.5-1.5h4.5l2 2.5H19a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 19.5H5A1.5 1.5 0 0 1 3.5 18z"/></svg>자료</button>
+        <span data-ic="folder"></span>자료</button>
       <button type="button" class="desk-only" data-view="notices">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4h3l6 4V6L7 10z"/><path d="M17 9a4 4 0 0 1 0 6"/></svg>공지</button>
+        <span data-ic="mailbox"></span>공지</button>
       <button type="button" class="desk-only" data-view="notes">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7" stroke-linecap="round"/></svg>운영 메모</button>
+        <span data-ic="memo"></span>운영 메모</button>
       <div class="nav-brand desk-only"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8"/><path d="M12 13c0-4 3-6.5 7-6.5 0 4-3 6.5-7 6.5z"/><path d="M12 15c0-3-2.3-5-5.5-5 0 3 2.3 5 5.5 5z"/></svg>two-clocks-home</div>
     </div>
   </nav>
@@ -1085,6 +1099,42 @@ const ENV_COLORS = {
   '쇼핑·자기계발': '#b88a2a', '고정비': '#7a6551', '부채상환': '#3f7f74', '비상금': '#8a8f6a', '기타': '#a39582',
 };
 const envColor = name => ENV_COLORS[name] || '#8b95a1';
+
+const IC = {
+  home: `<path class="f-wood" d="M15.6 7.4V4.2h2.4v5.2"/><path class="f-cream" d="M5.5 10.6V20h13v-9.4"/><path class="f-terra" d="M2.8 11.8 12 4l9.2 7.8z"/><path class="f-wood" d="M10.3 20v-4.4a1.7 1.7 0 0 1 3.4 0V20"/><rect class="f-blue" x="14.4" y="13" width="2.8" height="2.6" rx=".4"/><path d="M3.5 20h17"/>`,
+  ledger: `<rect class="f-olive" x="4.5" y="3" width="14" height="18" rx="1.6"/><rect class="f-cream" x="7.5" y="3" width="11" height="18" rx="1"/><path d="M10 8.5h6M10 11.8h6M10 15.1h3.6"/><path class="f-terra" d="M15.2 3v5.2l1.3-1 1.3 1V3"/><path d="M6 6.5h1.5M6 10h1.5M6 13.5h1.5M6 17h1.5"/>`,
+  calendar: `<rect class="f-cream" x="3.5" y="5.5" width="17" height="15" rx="2"/><path class="f-terra" d="M3.5 7.5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2V10h-17z"/><path d="M8 3.5v3.6M16 3.5v3.6"/><circle class="f-mustard" cx="15.5" cy="15.5" r="2.2"/><path d="M7 13.6h2.5M7 16.8h2.5"/>`,
+  can: `<path class="f-blue" d="M3.5 9.5h10.5v8.7a2.3 2.3 0 0 1-2.3 2.3H5.8a2.3 2.3 0 0 1-2.3-2.3z"/><path d="M5.6 9.5V8a3.1 3.1 0 0 1 6.2 0v1.5"/><path class="f-blue" d="M14 15.4 19.4 9.6l1.4 1.3-5.4 6"/><path class="f-mustard" d="m18.6 8.2 2.8-1.4 1.1 2.6-2.8 1.3z"/><path class="f-olive" d="M6.4 15.6c1-1.7 2.9-2 4.1-.7"/><path d="M21.5 13.4v.6M20 15.3v.6"/>`,
+  buttons: `<circle class="f-terra" cx="4.6" cy="12" r="3.6"/><circle class="f-olive" cx="12" cy="12" r="3.6"/><circle class="f-mustard" cx="19.4" cy="12" r="3.6"/><path d="M3.7 11.2v.1M5.5 12.8v.1M11.1 11.2v.1M12.9 12.8v.1M18.5 11.2v.1M20.3 12.8v.1"/>`,
+  envelope: `<rect class="f-cream" x="3" y="6" width="18" height="13" rx="1.6"/><path d="m3.6 7 8.4 6.4L20.4 7"/><circle class="f-terra" cx="12" cy="13.4" r="2.3"/><path d="M11.2 13.3l.6.6 1.1-1.2"/>`,
+  coins: `<ellipse class="f-mustard" cx="12" cy="17.5" rx="7" ry="2.5"/><path class="f-mustard" d="M5 14.5v3c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-3"/><ellipse class="f-mustard" cx="12" cy="14.5" rx="7" ry="2.5"/><path class="f-mustard" d="M6 9.5v3c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-3"/><ellipse class="f-mustard" cx="12" cy="9.5" rx="6" ry="2.3"/><path d="M10.6 9.4h2.8"/>`,
+  clock: `<circle class="f-terra" cx="6.6" cy="6.4" r="2.6"/><circle class="f-terra" cx="17.4" cy="6.4" r="2.6"/><circle class="f-cream" cx="12" cy="13" r="6.8"/><path d="M12 9.6V13l2.3 1.6"/><path d="m7.6 18.6-1.6 2.2M16.4 18.6l1.6 2.2"/><circle class="f-wood" cx="12" cy="4.6" r="1"/>`,
+  folder: `<path class="f-wood" d="M3 7.2A1.7 1.7 0 0 1 4.7 5.5h4l1.8 2h8.8A1.7 1.7 0 0 1 21 9.2v9.1a1.7 1.7 0 0 1-1.7 1.7H4.7A1.7 1.7 0 0 1 3 18.3z"/><rect class="f-cream" x="6" y="8.5" width="12" height="8" rx=".6" transform="rotate(-4 12 12.5)"/><path class="f-mustard" d="M3 11.5h18v6.8a1.7 1.7 0 0 1-1.7 1.7H4.7A1.7 1.7 0 0 1 3 18.3z"/>`,
+  mailbox: `<path class="f-wood" d="M11 14v7"/><path class="f-blue" d="M5 9.2a4.2 4.2 0 0 1 8.4 0V15H5z"/><path class="f-blue" d="M9.2 5H15a4.2 4.2 0 0 1 4.2 4.2V15h-5.8"/><path class="f-terra" d="M16.5 10V5.5l3 .9-3 1.4"/><path d="M6.8 11h4.8M4 21h14"/>`,
+  memo: `<rect class="f-cream" x="4" y="4.5" width="12.5" height="15.5" rx="1.2" transform="rotate(-5 10 12)"/><path d="M6.8 9.2l6.5-.6M7.1 12.4l6.5-.6M7.4 15.6l3.8-.4"/><path class="f-mustard" d="m14.6 18.8 5.2-9.2 2 1.2-5.2 9.2-2.4 1.1z"/><path class="f-rose" d="m19.8 9.6.9-1.6 2 1.2-.9 1.6z"/>`,
+  camera: `<rect class="f-wood" x="3" y="7" width="18" height="12" rx="2"/><path class="f-cream" d="M3 10h18v3H3z"/><path class="f-wood" d="M8 7l1.2-2.2h5.6L16 7"/><circle class="f-blue" cx="12" cy="13" r="3.6"/><circle cx="12" cy="13" r="1.4"/><rect class="f-mustard" x="16.6" y="8" width="2.4" height="1.4" rx=".4"/>`,
+  bowl: `<path class="f-cream" d="M5.3 11.6c0-2.6 2-4.2 3.8-3.6.7-1.6 3.5-1.9 4.7-.4 2.3-.6 4.2 1.3 4.2 4"/><path class="f-blue" d="M3.5 11.5h17a8.5 7.5 0 0 1-17 0z"/><path d="M15.5 2.8l-3.6 7.4M19 4l-5 6.3"/><path class="f-terra" d="M9 15.2h6"/>`,
+  tram: `<path d="M12 2.5v2.4M9.5 2.5h5"/><rect class="f-mustard" x="5" y="5" width="14" height="13" rx="3"/><rect class="f-blue" x="7" y="7.2" width="10" height="4.8" rx="1"/><path d="M12 7.2V12"/><circle class="f-cream" cx="8.6" cy="15" r="1"/><circle class="f-cream" cx="15.4" cy="15" r="1"/><path d="m7.5 18-1.5 3M16.5 18l1.5 3M5.5 21h13"/>`,
+  plant: `<path class="f-olive" d="M12 13.5C8 13.5 5.5 11 5.5 7.5c3.8 0 6.5 2.4 6.5 6z"/><path class="f-olive" d="M12 13.5c0-4.6 2.6-7.8 6.6-8 0 4.6-2.6 8-6.6 8z"/><path d="M12 13.5V9"/><path class="f-terra" d="M6.5 13.5h11l-1.4 7H7.9z"/><path d="M6.2 15.6h11.6"/>`,
+  pill: `<path class="f-rose" d="M10.2 5.4a4.2 4.2 0 0 1 5.9 5.9L13 14.4 7.1 8.5z"/><path class="f-cream" d="M7.1 8.5 13 14.4l-3.1 3.1a4.2 4.2 0 0 1-5.9-5.9z"/><path d="M15.2 7.5l-1.6 1.6"/><path class="f-olive" d="M18 15.6c1.3-1.8 3.6-.8 3 1-.4 1.2-3 3-3 3s-2.6-1.8-3-3c-.6-1.8 1.7-2.8 3-1z"/>`,
+  teacup: `<path d="M8.2 3.4c-.8 1 .8 1.6 0 2.6M11.4 3.4c-.8 1 .8 1.6 0 2.6"/><path class="f-rose" d="M4 8.5h12v3.3a6 6 0 0 1-12 0z"/><path d="M16 9.8h1.4a2.4 2.4 0 0 1 0 4.8H15"/><path class="f-cream" d="M2.8 19.2h14.4c-.6 1-1.7 1.6-3 1.6H5.8c-1.3 0-2.4-.6-3-1.6z"/><path class="f-cream" d="M8 11.5a2 2 0 0 0 4 0"/>`,
+  bag: `<path class="f-mustard" d="M4.5 8.5h15l-1.2 11.2a1.4 1.4 0 0 1-1.4 1.3H7.1a1.4 1.4 0 0 1-1.4-1.3z"/><path d="M8.5 10.5V7a3.5 3.5 0 0 1 7 0v3.5"/><path class="f-olive" d="M12 18.4c-2.4-1.3-2.6-3.4-1-3.6.5 0 .9.3 1 .7.1-.4.5-.7 1-.7 1.6.2 1.4 2.3-1 3.6z"/>`,
+  receipt: `<path class="f-cream" d="M6 3h12v18l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4L6 21z"/><path d="M9 7.5h6M9 11h6M9 14.5h3.5"/><circle class="f-terra" cx="15" cy="15.5" r="1.2"/>`,
+  jar: `<rect class="f-wood" x="6.5" y="3.5" width="11" height="3" rx=".8"/><path class="f-blue" d="M7 6.5h10v2c1.5 1 2 2.4 2 4v5.4A2.1 2.1 0 0 1 16.9 20H7.1A2.1 2.1 0 0 1 5 17.9v-5.4c0-1.6.5-3 2-4z"/><circle class="f-mustard" cx="10" cy="16" r="2"/><circle class="f-mustard" cx="14.3" cy="14.2" r="2"/><path d="M8 10.4h8"/>`,
+  star: `<path class="f-mustard" d="m12 3.5 2.5 5.3 5.7.7-4.2 4 1.1 5.7L12 16.4l-5.1 2.8L8 13.5l-4.2-4 5.7-.7z"/><path d="M10.6 11.6v.1M13.4 11.6v.1M10.8 13.6c.7.6 1.7.6 2.4 0"/>`,
+  purse: `<path d="M9 7.5V6a3 3 0 0 1 6 0v1.5"/><circle class="f-mustard" cx="9" cy="6" r="1.1"/><circle class="f-mustard" cx="15" cy="6" r="1.1"/><path class="f-olive" d="M4.5 10.5c0-1.7 1.3-3 3-3h9c1.7 0 3 1.3 3 3v6.2a3.8 3.8 0 0 1-3.8 3.8H8.3a3.8 3.8 0 0 1-3.8-3.8z"/><path class="f-rose" d="M12 17.6c-2.6-1.4-2.8-3.6-1.1-3.8.5 0 1 .3 1.1.8.1-.5.6-.8 1.1-.8 1.7.2 1.5 2.4-1.1 3.8z"/>`,
+  arrows: `<path class="f-cream" d="M3.5 7.5h13l-3-3"/><path class="f-cream" d="M20.5 16.5h-13l3 3"/><path d="M16.5 7.5l-3 3M7.5 16.5l3-3"/>`,
+  magnifier: `<circle class="f-blue" cx="10" cy="10" r="6"/><path class="f-wood" d="m14.5 14.5 5.5 5.5"/><path d="M7.4 8.6a3 3 0 0 1 2.4-1.8"/>`,
+  coin: `<circle class="f-mustard" cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="5.6"/><path d="M9.6 9.6l1.2 4.8 1.2-3.2 1.2 3.2 1.2-4.8M9 12h6"/>`,
+  umbrella: `<path class="f-rose" d="M3 12a9 9 0 0 1 18 0c-1.2-1-2.6-1-3.8 0-1.2-1-2.6-1-3.8 0h-2.8c-1.2-1-2.6-1-3.8 0-1.2-1-2.6-1-3.8 0z"/><path d="M12 3v1M12 12v6.5a2 2 0 0 1-4 0"/>`,
+  radio: `<path d="m8 6.5 7-3.5"/><rect class="f-wood" x="3" y="7" width="18" height="12" rx="2.4"/><circle class="f-cream" cx="9" cy="13" r="3.6"/><path d="M7.4 11.4h3.2M7 13h4M7.4 14.6h3.2"/><circle class="f-mustard" cx="16.5" cy="11" r="1.4"/><path d="M15 15.5h3"/>`,
+  clip: `<path class="f-cream" d="M6 4.5h9l3 3V20H6z"/><path d="M15 4.5v3h3"/><path class="f-terra" d="M10 9.5V5a1.5 1.5 0 0 1 3 0v6a3 3 0 0 1-6 0V7"/><path d="M8.5 15h6M8.5 17.5h4"/>`,
+  sprout: `<path d="M12 21v-9"/><path class="f-olive" d="M12 13c-4 0-6.5-2.3-6.5-6 4 0 6.5 2.4 6.5 6z"/><path class="f-olive" d="M12 11c0-3.8 2.3-6.2 6-6.2 0 3.7-2.3 6.2-6 6.2z"/><path d="M8.5 21h7"/>`,
+};
+
+const icon = (name, cls = '') => `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${IC[name] || IC.star}</svg>`;
+const ENV_IC = { '식비': 'bowl', '교통': 'tram', '생활·주거': 'plant', '건강·의료': 'pill', '여가·모임': 'teacup', '쇼핑·자기계발': 'bag', '고정비': 'receipt', '부채상환': 'coins', '비상금': 'jar', '기타': 'star' };
+const DOC_IC = { '집·이사': 'home', '금융': 'coin', '보험': 'umbrella', '가전·보증서': 'radio', '건강': 'pill', '기타': 'clip' };
 
 const ICONS = {
   chev: '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
@@ -1348,12 +1398,12 @@ function renderHome() {
   const review = Number(s.review_count || 0);
   $('#summary-rows').innerHTML = `
     <button class="row" type="button" data-goto="review">
-      <span class="avatar" style="--c:var(--warn)">!</span>
+      <span class="avatar" style="--c:var(--warn)">${icon('magnifier')}</span>
       <span class="body"><span class="title">확인할 거래</span></span>
       <span class="pill ${review ? 'warn' : ''} num">${review}건</span>${ICONS.chev}
     </button>
     <button class="row" type="button" data-goto="debt">
-      <span class="avatar" style="--c:${envColor('부채상환')}">빚</span>
+      <span class="avatar" style="--c:${envColor('부채상환')}">${icon('coins')}</span>
       <span class="body"><span class="title">남은 부채</span><span class="sub num">이번 달 ${won(s.debt_repaid || 0)} 상환</span></span>
       <span class="end"><span class="amt num">${won(debtTotal)}</span></span>${ICONS.chev}
     </button>`;
@@ -1378,13 +1428,13 @@ function renderHome() {
 function txHtml(t) {
   let avatar, amt;
   if (t.type === '수입') {
-    avatar = `<span class="avatar" style="--c:var(--plus)">${ICONS.plus}</span>`;
+    avatar = `<span class="avatar" style="--c:var(--plus)">${icon('purse')}</span>`;
     amt = `<span class="amt num plus">+${fmt(t.amount)}원</span>`;
   } else if (t.type === '이동') {
-    avatar = `<span class="avatar">${ICONS.move}</span>`;
+    avatar = `<span class="avatar">${icon('arrows')}</span>`;
     amt = `<span class="amt num move">${fmt(t.amount)}원</span>`;
   } else {
-    avatar = `<span class="avatar" style="--c:${envColor(t.envelope)}">${esc((t.envelope || '?').slice(0, 1))}</span>`;
+    avatar = `<span class="avatar" style="--c:${envColor(t.envelope)}">${icon(ENV_IC[t.envelope])}</span>`;
     amt = `<span class="amt num">−${fmt(t.amount)}원</span>`;
   }
   const sub = [t.subcategory || t.category, t.payment_method].filter(Boolean).join(' · ');
@@ -1890,7 +1940,7 @@ function moneyItems(from, to) {
   return items.sort((a, b) => a.date.localeCompare(b.date));
 }
 function moneyRow(mi, showDate = false) {
-  return `<div class="row money-row"><span class="avatar">₩</span>
+  return `<div class="row money-row"><span class="avatar">${icon('coin')}</span>
     <span class="body"><span class="title">${esc(mi.title)}</span><span class="sub">${esc([showDate ? `${mmdd(mi.date)} ${weekday(mi.date)}` : null, mi.sub].filter(Boolean).join(' · '))}</span></span></div>`;
 }
 
@@ -2141,12 +2191,12 @@ function renderToday() {
   parts.push(`<div class="block-head"><h2>오늘 ${mmdd(t)} ${weekday(t)}요일</h2></div>`);
   parts.push('<div class="rows">');
   parts.push((state.notices || []).filter(n => n.pinned).map(n => `<button class="row" type="button" data-goto-view="notices">
-    <span class="avatar" style="--c:var(--warn)">공</span>
+    <span class="avatar" style="--c:var(--warn)">${icon('mailbox')}</span>
     <span class="body"><span class="title">${esc(n.title)}</span><span class="sub">${esc(n.body || '')}</span></span>${ICONS.chev}</button>`).join(''));
   parts.push(events.map(ev => eventRow(ev)).join('') || '<div class="row"><span class="body"><span class="sub">오늘 약속은 없어요</span></span></div>');
   if (state.debts.length) parts.push(moneyItems(t, t).map(mi => moneyRow(mi)).join(''));
   parts.push(`<button class="row" type="button" data-goto-view="chores">
-    <span class="avatar" style="--c:${due.length ? 'var(--accent)' : 'var(--muted)'}">✓</span>
+    <span class="avatar" style="--c:${due.length ? 'var(--accent)' : 'var(--muted)'}">${icon('can')}</span>
     <span class="body"><span class="title">${due.length ? `집안일 ${due.length}개 남았어요` : '오늘 집안일 끝'}</span>
       <span class="sub">${esc(due.slice(0, 3).map(c => c.title).join(', '))}</span></span>${ICONS.chev}</button>`);
   if (week.length) parts.push(week.map(ev => eventRow(ev, true)).join(''));
@@ -2496,11 +2546,11 @@ function renderRecurring() {
     const when = r.on_payday ? '월급날' : `매월 ${r.day}일`;
     const sub = [when, r.envelope, r.payment_method, r.start_on > today() ? `${mmdd(r.start_on)}부터` : null, r.end_on ? `${mmdd(r.end_on)}까지` : null].filter(Boolean).join(' · ');
     return `<button class="row rec-row" type="button" data-rec="${r.id}" ${r.active ? '' : 'style="opacity:.5"'}>
-      <span class="avatar" style="--c:${envColor(r.envelope)}">${esc(r.name.slice(0, 1))}</span>
+      <span class="avatar" style="--c:${envColor(r.envelope)}">${icon(ENV_IC[r.envelope])}</span>
       <span class="body"><span class="title">${esc(r.name)}</span><span class="sub">${esc(sub)}${r.estimated ? '<span class="tag">추정</span>' : ''}${r.active ? '' : '<span class="tag">멈춤</span>'}</span></span>
       <span class="end"><span class="amt num">${fmt(r.amount)}원</span></span></button>`;
   }).join('') + `<button class="row rec-row" type="button" data-goto-view="debt">
-      <span class="avatar" style="--c:${envColor('부채상환')}">빚</span>
+      <span class="avatar" style="--c:${envColor('부채상환')}">${icon('coins')}</span>
       <span class="body"><span class="title">대출 상환</span><span class="sub">부채 화면 기준 · 대부분 월급날</span></span>
       <span class="end"><span class="amt num">${fmt(loans)}원</span></span></button>`;
 }
@@ -2597,7 +2647,7 @@ function renderDocs() {
     const n = state.docFiles.filter(f => f.doc_id === d.id).length;
     const sub = [d.category, n ? `파일 ${n}개` : '파일 없음', mmdd(d.updated_at.slice(0, 10))].join(' · ');
     return `<button class="row" type="button" data-doc="${d.id}">
-      <span class="avatar" style="--c:${DOC_COLORS[d.category] || '#7a8794'}">${esc(d.category.slice(0, 1))}</span>
+      <span class="avatar" style="--c:${DOC_COLORS[d.category] || '#7a8794'}">${icon(DOC_IC[d.category] || 'clip')}</span>
       <span class="body"><span class="title">${esc(d.title)}${d.shared ? '' : ` <span class="tag lock-tag">${LOCK_SVG}</span>`}</span><span class="sub">${esc(sub)}</span></span>
       ${ICONS.chev}</button>`;
   }).join('') || (state.docs.length ? '<div class="empty">찾는 자료가 없어요</div>'
@@ -2859,7 +2909,7 @@ document.addEventListener('visibilitychange', () => {
 function applyShowcase() {
   document.body.classList.toggle('showcase', showcase);
   $('#showcase-toggle').setAttribute('aria-pressed', String(showcase));
-  $('#showcase-toggle span').textContent = showcase ? '보여주기 중' : '보여주기';
+  $('#showcase-toggle .sc-label').textContent = showcase ? '보여주기 중' : '보여주기';
 }
 $('#showcase-toggle').addEventListener('click', () => {
   showcase = !showcase;
@@ -2870,6 +2920,7 @@ $('#showcase-toggle').addEventListener('click', () => {
   if (state.view === 'docs') renderDocs();
   toast(showcase ? '금액을 가렸어요. 촬영해도 괜찮아요' : '금액을 다시 보여 줘요');
 });
+for (const el of $$('[data-ic]')) el.innerHTML = icon(el.dataset.ic);
 applyShowcase();
 
 start().catch(fail);
