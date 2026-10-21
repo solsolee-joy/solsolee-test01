@@ -36,7 +36,12 @@
   - 9월·10월 봉투별 지출 합계와 월 수입·지출이 원래 시트 대시보드와 일치함을 확인
 - 이관에 쓴 `import.fetch_sheet` 함수와 `http` 확장은 아직 남아 있다. API로 노출되지 않지만 지워도 된다:
   `drop schema import cascade; drop extension http;`
-- 남은 일: `members`에 두 사람 이메일 등록, 화면 만들기, 호스팅 위치 결정, 봉투 배정액 정하기
+- 2026-10-21 `members`에 두 사람 등록, 10월·11월 봉투 배정 초안 입력, 9월 집 계약금 일회성 처리
+- 2026-10-21 화면(`index.html`) 작성. GitHub Pages로 배포
+  - 주소: https://solsolee-joy.github.io/solsolee-test01/household/
+  - 로그인은 이메일 링크(Supabase Auth). Supabase 대시보드 Authentication → URL Configuration에서
+    Site URL과 Redirect URLs에 위 주소를 넣어야 링크가 이 페이지로 돌아온다
+- 남은 일: 봉투 배정액 확정, 집안일 탭
 
 ## 구글 시트에서 옮길 때 정리한 것
 
