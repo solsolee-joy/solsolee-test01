@@ -441,6 +441,10 @@ dialog::backdrop { background: var(--scrim); }
 .quick-add.sub-qa { margin: 4px 0 10px 28px; }
 .add-sub { width: 28px; height: 28px; flex-shrink: 0; border: 0; border-radius: 50%; background: var(--fill); color: var(--muted); font-size: 18px; line-height: 28px; padding: 0; }
 .add-sub[aria-expanded="true"] { background: var(--accent); color: var(--on-accent); }
+.block-head:has(.head-add) { align-items: center; }
+.block-head:has(.head-add) .aside { margin-left: auto; }
+.block-head .head-add { width: 28px; height: 28px; flex-shrink: 0; border: 0; border-radius: 50%; background: var(--fill); color: var(--text-2); font-size: 18px; line-height: 28px; padding: 0; margin-left: 8px; }
+.block-head .head-add[aria-expanded="true"] { background: var(--accent); color: var(--on-accent); }
 .mine-note { text-align: center; font-size: 13px; color: var(--muted); margin: 4px 0 24px; }
 .weekdays { display: flex; gap: 6px; margin-top: 6px; }
 .weekdays button { flex: 1; border: 0; padding: 10px 0; border-radius: 10px; background: var(--fill); color: var(--muted); font-weight: 600; }
@@ -955,13 +959,13 @@ body {
         <div id="mine-today"></div>
       </div>
       <div class="block">
-        <div class="block-head"><h2>할 일</h2><span class="aside num" id="mine-todo-count"></span></div>
-        <form class="quick-add" data-qa="todo"><input autocomplete="off" required maxlength="200" placeholder="할 일 적고 엔터"><button class="btn" type="submit">추가</button></form>
+        <div class="block-head"><h2>할 일</h2><span class="aside num" id="mine-todo-count"></span><button class="head-add" type="button" data-qa-open="todo" aria-expanded="false" aria-label="할 일 추가">+</button></div>
+        <form class="quick-add hidden" data-qa="todo"><input autocomplete="off" required maxlength="200" placeholder="할 일 적고 엔터"><button class="btn" type="submit">추가</button></form>
         <div id="mine-todos"></div>
       </div>
       <div class="block">
-        <div class="block-head"><h2>내 루틴</h2><span class="aside">연속 기록</span></div>
-        <form class="quick-add" data-qa="routine"><input autocomplete="off" required maxlength="200" placeholder="루틴 적고 엔터 (매일)"><button class="btn" type="submit">추가</button></form>
+        <div class="block-head"><h2>내 루틴</h2><span class="aside">연속 기록</span><button class="head-add" type="button" data-qa-open="routine" aria-expanded="false" aria-label="루틴 추가">+</button></div>
+        <form class="quick-add hidden" data-qa="routine"><input autocomplete="off" required maxlength="200" placeholder="루틴 적고 엔터 (매일)"><button class="btn" type="submit">추가</button></form>
         <div id="mine-routines"></div>
       </div>
       <div class="block">
@@ -977,8 +981,8 @@ body {
         <div class="week-grid" id="week-grid"></div>
       </div>
       <div class="block">
-        <div class="block-head"><h2>오늘까지</h2><span class="aside num" id="chores-due-count"></span></div>
-        <form class="quick-add" data-qa="chore"><input autocomplete="off" required maxlength="200" placeholder="집안일 적고 엔터"><select aria-label="얼마나 자주"><option value="">한 번만</option><option value="1">매일</option><option value="3">3일마다</option><option value="7">매주</option><option value="14">2주마다</option><option value="30">한 달마다</option></select><button class="btn" type="submit">추가</button></form>
+        <div class="block-head"><h2>오늘까지</h2><span class="aside num" id="chores-due-count"></span><button class="head-add" type="button" data-qa-open="chore" aria-expanded="false" aria-label="집안일 추가">+</button></div>
+        <form class="quick-add hidden" data-qa="chore"><input autocomplete="off" required maxlength="200" placeholder="집안일 적고 엔터"><select aria-label="얼마나 자주"><option value="">한 번만</option><option value="1">매일</option><option value="3">3일마다</option><option value="7">매주</option><option value="14">2주마다</option><option value="30">한 달마다</option></select><button class="btn" type="submit">추가</button></form>
         <div id="chores-due"></div>
       </div>
       <div class="block">
@@ -2603,7 +2607,7 @@ function renderChores() {
   $('#chores-due-count').textContent = due.length ? `${due.length}개` : '';
   $('#chores-due').innerHTML = due.map(choreRow).join('') ||
     (state.chores.length ? '<div class="empty">오늘 할 일을 다 했어요</div>'
-      : '<div class="placeholder"><b>아직 등록한 집안일이 없어요</b>위 칸에 분리수거, 청소 같은 일을 적어 보세요</div>');
+      : '<div class="placeholder"><b>아직 등록한 집안일이 없어요</b>위 +를 눌러 분리수거, 청소 같은 일을 적어 보세요</div>');
   $('#chores-soon').innerHTML = soon.map(choreRow).join('') || '<div class="empty">예정된 일이 없어요</div>';
   $('#chore-logs').innerHTML = state.choreLogs.map(l => {
     const p = person(l.done_by);
@@ -2717,7 +2721,7 @@ function renderMine() {
   const doneToday = todayList.filter(r => state.routineDone.has(doneKey(r.id, t))).length;
   $('#mine-routine-count').textContent = todayList.length ? `${doneToday}/${todayList.length}` : '';
   $('#mine-today').innerHTML = todayList.map(r => routineRow(r, true)).join('') ||
-    `<div class="empty">${routines.length ? '오늘은 하는 루틴이 없어요' : '아래 ‘내 루틴’ 칸에 적어 보세요'}</div>`;
+    `<div class="empty">${routines.length ? '오늘은 하는 루틴이 없어요' : '아래 ‘내 루틴’의 +로 만들어 보세요'}</div>`;
   const open = (state.todos || []).filter(x => !x.done_on && !x.parent_id)
     .sort((a, b) => (a.due_on || '9999').localeCompare(b.due_on || '9999') || a.created_at.localeCompare(b.created_at));
   $('#mine-todo-count').textContent = open.length ? `${open.length}개` : '';
@@ -2868,8 +2872,23 @@ document.addEventListener('submit', async e => {
   await loadMine();
   if (kind === 'sub') $('[data-qa=sub] input')?.focus(); // 다시 그려져도 이어 쓰게
 });
+// 블록 제목 옆 +: 그 블록의 입력 칸을 열고 닫는다
+function toggleQuickAdd(kind, open) {
+  const form = $(`.quick-add[data-qa="${kind}"]`);
+  const show = open ?? form.classList.contains('hidden');
+  form.classList.toggle('hidden', !show);
+  $(`[data-qa-open="${kind}"]`).setAttribute('aria-expanded', show);
+  if (show) form.querySelector('input').focus();
+}
+document.addEventListener('click', e => {
+  const k = e.target.closest('[data-qa-open]')?.dataset.qaOpen;
+  if (k) toggleQuickAdd(k);
+});
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && e.target.closest?.('.sub-qa')) { e.preventDefault(); toggleSubInput(state.subOpen); }
+  if (e.key !== 'Escape') return;
+  if (e.target.closest?.('.sub-qa')) { e.preventDefault(); toggleSubInput(state.subOpen); }
+  const qa = e.target.closest?.('.quick-add[data-qa]:not(.sub-qa)');
+  if (qa) { e.preventDefault(); toggleQuickAdd(qa.dataset.qa, false); }
 });
 $('#t-days').addEventListener('click', e => {
   const d = Number(e.target.dataset.d);
