@@ -940,7 +940,7 @@ body {
 
     <section class="view hidden" id="view-recurring">
       <div class="block">
-        <div class="block-head"><h2>매달 나가는 돈</h2><span class="aside num" id="rec-total"></span></div>
+        <div class="block-head"><h2>정기적으로 나가는 돈</h2><span class="aside num" id="rec-total"></span></div>
         <div class="rows" id="rec-list"></div>
         <div class="plan-note">대출 상환액은 부채 화면의 월 납입액을 그대로 씁니다.</div>
       </div>
@@ -1293,7 +1293,8 @@ body {
     <div class="amount-field"><input id="r-amount" inputmode="numeric" class="num" required placeholder="0" aria-label="금액"><span>원</span></div>
     <div class="form">
       <label class="full">이름<input id="r-name" required autocomplete="off" placeholder="예: 신림 월세"></label>
-      <label>언제<select id="r-when"><option value="day">매월 정한 날</option><option value="payday">월급날</option></select></label>
+      <label>언제<select id="r-when"><option value="day">매월 정한 날</option><option value="year">매년 정한 날</option><option value="payday">월급날</option></select></label>
+      <label id="r-month-wrap" class="hidden">몇 월<select id="r-month"><option value="1">1월</option><option value="2">2월</option><option value="3">3월</option><option value="4">4월</option><option value="5">5월</option><option value="6">6월</option><option value="7">7월</option><option value="8">8월</option><option value="9">9월</option><option value="10">10월</option><option value="11">11월</option><option value="12">12월</option></select></label>
       <label id="r-day-wrap">며칠<input id="r-day" type="number" min="1" max="31" inputmode="numeric"></label>
       <label>예산<select id="r-envelope"><option value="">없음</option></select></label>
       <label>결제수단<input id="r-pay" list="dl-pay" autocomplete="off"></label>
@@ -3152,7 +3153,7 @@ function outflows(from, to) {
     const payday = paydayOf(y, m);
     const at = day => `${y}-${pad(m)}-${pad(Math.min(day, last))}`;
     for (const r of state.recurring) {
-      if (!r.active) continue;
+      if (!r.active || (r.month && r.month !== m)) continue;
       const date = r.on_payday ? payday : r.day ? at(r.day) : null;
       if (!date || date < r.start_on || (r.end_on && date > r.end_on)) continue;
       out.push({ date, name: r.name, amount: Number(r.amount), envelope: r.envelope, estimated: r.estimated, rec: r.id });
@@ -3380,9 +3381,11 @@ function renderRecurring() {
   const list = state.recurring;
   const active = list.filter(r => r.active && (!r.end_on || r.end_on >= today()));
   const loans = state.debts.filter(d => Number(d.balance) > 0 && d.monthly_payment).reduce((a, d) => a + Number(d.monthly_payment), 0);
-  $('#rec-total').textContent = `월 ${won(active.reduce((a, r) => a + Number(r.amount), 0) + loans)} (대출 포함)`;
+  const sum = rs => rs.reduce((a, r) => a + Number(r.amount), 0);
+  const yearly = sum(active.filter(r => r.month));
+  $('#rec-total').textContent = `월 ${won(sum(active.filter(r => !r.month)) + loans)} (대출 포함)${yearly ? ` · 매년 ${won(yearly)}` : ''}`;
   $('#rec-list').innerHTML = list.map(r => {
-    const when = r.on_payday ? '월급날' : `매월 ${r.day}일`;
+    const when = r.on_payday ? '월급날' : r.month ? `매년 ${r.month}월 ${r.day}일` : `매월 ${r.day}일`;
     const sub = [when, r.envelope, r.payment_method, r.start_on > today() ? `${mmdd(r.start_on)}부터` : null, r.end_on ? `${mmdd(r.end_on)}까지` : null].filter(Boolean).join(' · ');
     return `<button class="row rec-row" type="button" data-rec="${r.id}" ${r.active ? '' : 'style="opacity:.5"'}>
       <span class="avatar" style="--c:${envColor(r.envelope)}">${icon(ENV_IC[r.envelope])}</span>
@@ -3399,7 +3402,10 @@ $('#rec-list').addEventListener('click', e => {
   if (id) openRec(state.recurring.find(r => String(r.id) === id));
 });
 
-function syncRecWhen() { $('#r-day-wrap').classList.toggle('hidden', $('#r-when').value === 'payday'); }
+function syncRecWhen() {
+  $('#r-day-wrap').classList.toggle('hidden', $('#r-when').value === 'payday');
+  $('#r-month-wrap').classList.toggle('hidden', $('#r-when').value !== 'year');
+}
 $('#r-when').addEventListener('change', syncRecWhen);
 $('#r-amount').addEventListener('input', e => { const n = parseAmount(e.target.value); e.target.value = n ? fmtInput(n) : ''; });
 
@@ -3409,7 +3415,8 @@ function openRec(r) {
   $('#rec-delete').classList.toggle('hidden', !r);
   $('#r-amount').value = r ? fmtInput(r.amount) : '';
   $('#r-name').value = r?.name || '';
-  $('#r-when').value = r?.on_payday ? 'payday' : 'day';
+  $('#r-when').value = r?.on_payday ? 'payday' : r?.month ? 'year' : 'day';
+  $('#r-month').value = r?.month || new Date().getMonth() + 1;
   $('#r-day').value = r?.day || '';
   $('#r-envelope').value = r?.envelope || '고정비';
   $('#r-pay').value = r?.payment_method || '';
@@ -3428,6 +3435,7 @@ $('#rec-form').addEventListener('submit', async e => {
   const row = {
     name: $('#r-name').value.trim(), amount: parseAmount($('#r-amount').value),
     on_payday: onPayday, day: onPayday ? null : Number($('#r-day').value) || null,
+    month: $('#r-when').value === 'year' ? Number($('#r-month').value) : null,
     envelope: $('#r-envelope').value || null, payment_method: $('#r-pay').value.trim() || null,
     start_on: $('#r-start').value, end_on: $('#r-end').value || null, memo: $('#r-memo').value.trim() || null,
     estimated: $('#r-est').checked, active: $('#r-active').checked,
