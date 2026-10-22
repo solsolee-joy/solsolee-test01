@@ -406,6 +406,19 @@ dialog::backdrop { background: var(--scrim); }
 }
 .check-btn:hover { border-color: var(--accent); color: var(--accent); }
 .check-btn svg { width: 16px; height: 16px; }
+.check-btn.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+/* 내 할 일 */
+.streak { font-size: 13px; font-weight: 600; color: var(--amber); white-space: nowrap; }
+.chore-row.done .title { color: var(--muted); text-decoration: line-through; }
+.mine-note { text-align: center; font-size: 13px; color: var(--muted); margin: 4px 0 24px; }
+.weekdays { display: flex; gap: 6px; margin-top: 6px; }
+.weekdays button { flex: 1; border: 0; padding: 10px 0; border-radius: 10px; background: var(--fill); color: var(--muted); font-weight: 600; }
+.weekdays button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+#t-days-wrap { grid-column: 1 / -1; }
+#t-days-wrap .lbl { font-size: 13px; font-weight: 500; color: var(--muted); }
+.form .hint.full { grid-column: 1 / -1; }
+.ev-filter { display: inline-flex; gap: 4px; }
+.cal .chips em.private { background: none; box-shadow: inset 0 0 0 1px var(--c); }
 .due { font-size: 13px; font-weight: 600; color: var(--muted); }
 .due.late { color: var(--minus); }
 .due.today { color: var(--accent); }
@@ -889,6 +902,27 @@ body {
       </div>
     </section>
 
+    <!-- 내 할 일: 할 일·루틴은 쓴 사람만 본다 (RLS) -->
+    <section class="view hidden" id="view-mine">
+      <div class="block">
+        <div class="block-head"><h2>오늘 루틴</h2><span class="aside num" id="mine-routine-count"></span></div>
+        <div id="mine-today"></div>
+      </div>
+      <div class="block">
+        <div class="block-head"><h2>할 일</h2><span class="aside num" id="mine-todo-count"></span></div>
+        <div id="mine-todos"></div>
+      </div>
+      <div class="block">
+        <div class="block-head"><h2>내 루틴</h2><span class="aside">연속 기록</span></div>
+        <div id="mine-routines"></div>
+      </div>
+      <div class="block">
+        <div class="block-head"><h2>끝낸 일</h2><span class="aside">최근 30일</span></div>
+        <div id="mine-done"></div>
+      </div>
+      <p class="mine-note">여기 있는 건 나만 봐요. 상대 화면에는 나오지 않아요</p>
+    </section>
+
     <section class="view hidden" id="view-chores">
       <div class="block" id="chores-week">
         <div class="block-head"><h2>이번 주 누가 했나</h2><span class="aside num" id="chores-week-sum"></span></div>
@@ -934,6 +968,7 @@ body {
       <div class="nav-group desk-only">일정</div>
       <button type="button" class="desk-only sub" data-view="schedule"><span data-ic="calendar"></span>달력</button>
       <button type="button" class="desk-only sub" data-view="chores"><span data-ic="can"></span>집안일</button>
+      <button type="button" class="desk-only sub" data-view="mine"><span data-ic="star"></span>내 할 일</button>
       <div class="nav-group desk-only">자료</div>
       <button type="button" class="desk-only sub" data-view="docs"><span data-ic="folder"></span>자료</button>
       <button type="button" class="desk-only sub" data-view="notices"><span data-ic="mailbox"></span>공지</button>
@@ -1002,6 +1037,8 @@ body {
     <h3 id="event-dialog-title">일정 추가</h3>
     <div class="seg" id="e-owner"></div>
     <div class="form">
+      <div class="checks"><label class="toggle"><input id="e-only-me" type="checkbox"><span>나만 보기</span></label></div>
+      <div class="hint full" id="e-only-hint"></div>
       <label class="full">무슨 일<input id="e-title" required autocomplete="off" placeholder="예: 대학 동기 저녁 약속"></label>
       <label class="full">날짜<input id="e-date" type="date" required></label>
       <div class="hint" id="e-hint"></div>
@@ -1014,6 +1051,27 @@ body {
     <div class="actions">
       <button class="btn danger hidden" id="event-delete" type="button">삭제</button>
       <button class="btn" type="button" id="event-cancel">닫기</button>
+      <button class="btn primary" type="submit">저장</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="todo-dialog">
+  <form class="sheet" id="todo-form" method="dialog">
+    <h3 id="todo-dialog-title">할 일 추가</h3>
+    <div class="seg" id="t-kind">
+      <button type="button" data-v="todo" aria-pressed="true">할 일</button>
+      <button type="button" data-v="routine" aria-pressed="false">반복 루틴</button>
+    </div>
+    <div class="form">
+      <label class="full">무엇을<input id="t-title" required autocomplete="off"></label>
+      <label class="full" id="t-due-wrap">언제까지 (비워도 돼요)<input id="t-due" type="date"></label>
+      <div class="full hidden" id="t-days-wrap"><span class="lbl">하는 요일</span><div class="weekdays" id="t-days"></div></div>
+      <label class="full" id="t-memo-wrap">메모<textarea id="t-memo"></textarea></label>
+    </div>
+    <div class="actions">
+      <button class="btn danger hidden" id="todo-delete" type="button">삭제</button>
+      <button class="btn" type="button" id="todo-cancel">닫기</button>
       <button class="btn primary" type="submit">저장</button>
     </div>
   </form>
@@ -1298,6 +1356,9 @@ const state = {
   paydayDay: 25,
   showAllEnv: false,
   showMoney: (() => { try { return localStorage.getItem('showMoney') !== '0'; } catch { return true; } })(),
+  // 달력 거르기: all 전체, shared 함께 보는 일정만, mine 나만 보는 일정만
+  eventFilter: (() => { try { return localStorage.getItem('eventFilter') || 'all'; } catch { return 'all'; } })(),
+  routineDone: new Set(),
   planExtra: 100000,
   editingRec: null,
 };
@@ -1384,7 +1445,7 @@ async function start() {
   renderPasswordRow();
   await loadStatic();
   await loadPrivate();
-  await Promise.all([loadMonth(), loadChores(), loadNotices(), loadDocs(), loadInbox()]);
+  await Promise.all([loadMonth(), loadChores(), loadNotices(), loadDocs(), loadInbox(), loadMine()]);
   watchChanges();
   // 홈 화면 아이콘(manifest start_url)으로 열면 바로 메모 창을 띄운다
   if (new URLSearchParams(location.search).has('memo') && !$('#pw-dialog').open) openInbox();
@@ -1882,16 +1943,16 @@ document.addEventListener('click', e => {
 
 // 이동 ---------------------------------------------------------------
 
-const VIEW_TITLES = { debt: '부채', notes: '운영 메모', notices: '공지', docs: '자료', recurring: '정기 지출', chores: '집안일' };
+const VIEW_TITLES = { debt: '부채', notes: '운영 메모', notices: '공지', docs: '자료', recurring: '정기 지출', chores: '집안일', mine: '내 할 일' };
 // 큰 묶음 셋. 아래 탭은 묶음 단위, 묶음 안은 화면 위 작은 탭(#subtabs)으로 바꾼다
 const GROUPS = {
   ledger: [['tx', '내역'], ['budget', '예산'], ['debt', '부채'], ['recurring', '정기 지출']],
-  plan: [['schedule', '달력'], ['chores', '집안일']],
+  plan: [['schedule', '달력'], ['chores', '집안일'], ['mine', '내 할 일']],
   library: [['docs', '자료'], ['notices', '공지'], ['notes', '운영 메모']],
 };
 const GROUP_OF = Object.fromEntries(Object.entries(GROUPS).flatMap(([g, views]) => views.map(([v]) => [v, g])));
 const lastInGroup = {};
-const FAB_LABEL = { home: '기록하기', tx: '기록하기', schedule: '일정 추가', chores: '집안일 추가', notes: '메모 추가', notices: '공지 쓰기', docs: '자료 추가', recurring: '정기 지출 추가' };
+const FAB_LABEL = { home: '기록하기', tx: '기록하기', schedule: '일정 추가', chores: '집안일 추가', mine: '할 일 추가', notes: '메모 추가', notices: '공지 쓰기', docs: '자료 추가', recurring: '정기 지출 추가' };
 
 function go(view) {
   state.view = view;
@@ -2028,6 +2089,7 @@ $('#add-tx').addEventListener('click', () => {
   else if (state.view === 'docs') openDoc(null);
   else if (state.view === 'recurring') openRec(null);
   else if (state.view === 'chores') openChore(null);
+  else if (state.view === 'mine') openTodo(null);
   else openTx(null);
 });
 $('#tx-cancel').addEventListener('click', () => $('#tx-dialog').close());
@@ -2187,7 +2249,7 @@ function eventRow(ev, showDate = false) {
   return `<button class="row" type="button" data-event="${esc(ev.id)}">
     <span class="who-bar" style="--c:${p.color}"></span>
     <span class="time num">${time}</span>
-    <span class="body"><span class="title">${esc(ev.title)}${privateNote('event', ev.id) ? ` <span class="tag lock-tag"><svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>` : ''}</span><span class="sub">${esc(sub)}</span></span>
+    <span class="body"><span class="title">${esc(ev.title)}${ev.private ? ` <span class="tag lock-tag">${LOCK_SVG} 나만</span>` : ''}${!ev.private && privateNote('event', ev.id) ? ` <span class="tag lock-tag"><svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>` : ''}</span><span class="sub">${esc(sub)}</span></span>
   </button>`;
 }
 
@@ -2222,7 +2284,8 @@ function renderSchedule() {
     state.selectedDay = today().slice(0, 7) === state.month ? today() : start;
   }
   const byDay = {};
-  for (const ev of state.events) (byDay[ev.date] ||= []).push(ev);
+  const shown = state.events.filter(ev => state.eventFilter === 'mine' ? ev.private : state.eventFilter === 'shared' ? !ev.private : true);
+  for (const ev of shown) (byDay[ev.date] ||= []).push(ev);
   const moneyByDay = {};
   if (state.showMoney) for (const mi of moneyItems(start, `${state.month}-${pad(days)}`)) (moneyByDay[mi.date] ||= []).push(mi);
   // 월요일부터 시작
@@ -2237,14 +2300,16 @@ function renderSchedule() {
       <span class="d num">${d}</span>
       <span class="dots">${owners.map(o => `<i style="--c:${person(o).color}"></i>`).join('')}${moneyByDay[iso] ? '<i class="money"></i>' : ''}</span>
       <span class="chips">${(byDay[iso] || []).slice(0, 3).map(ev =>
-        `<em style="--c:${person(ev.owner).color}">${ev.start_time ? `<b>${hhmm(ev.start_time)}</b>` : ''}${esc(ev.title)}</em>`).join('')}${
+        `<em class="${ev.private ? 'private' : ''}" style="--c:${person(ev.owner).color}">${ev.start_time ? `<b>${hhmm(ev.start_time)}</b>` : ''}${esc(ev.title)}</em>`).join('')}${
         (byDay[iso] || []).length > 3 ? `<em class="more">+${byDay[iso].length - 3}</em>` : ''}${
         (moneyByDay[iso] || []).map(mi => `<em class="money">₩ ${esc(mi.title)}</em>`).join('')}</span>
     </button>`;
   }
   $('#cal').innerHTML = html;
   $('#legend').innerHTML = [...state.members, TOGETHER].map(p => `<span style="--c:${p.color}">${esc(p.display_name)}</span>`).join('') +
-    `${state.showMoney ? '<span class="money-key">돈 일정</span>' : ''}<button class="chip" type="button" id="money-toggle" aria-pressed="${state.showMoney}">₩ 돈 일정 ${state.showMoney ? '켜짐' : '꺼짐'}</button>`;
+    `${state.showMoney ? '<span class="money-key">돈 일정</span>' : ''}<button class="chip" type="button" id="money-toggle" aria-pressed="${state.showMoney}">₩ 돈 일정 ${state.showMoney ? '켜짐' : '꺼짐'}</button>` +
+    `<span class="ev-filter">${[['all', '전체'], ['shared', '함께 보는'], ['mine', '나만 보는']].map(([v, l]) =>
+      `<button class="chip" type="button" data-evf="${v}" aria-pressed="${state.eventFilter === v}">${l}</button>`).join('')}</span>`;
 
   const sel = state.selectedDay;
   $('#day-title').textContent = `${mmdd(sel)} ${weekday(sel)}요일`;
@@ -2272,6 +2337,12 @@ function renderSchedule() {
 }
 
 $('#legend').addEventListener('click', e => {
+  const f = e.target.closest('[data-evf]')?.dataset.evf;
+  if (f) {
+    state.eventFilter = f;
+    try { localStorage.setItem('eventFilter', f); } catch { /* 저장 못 해도 이번 화면에선 동작 */ }
+    return renderSchedule();
+  }
   if (!e.target.closest('#money-toggle')) return;
   state.showMoney = !state.showMoney;
   try { localStorage.setItem('showMoney', state.showMoney ? '1' : '0'); } catch { /* 저장 못 해도 이번 화면에선 동작 */ }
@@ -2315,6 +2386,11 @@ function openEvent(ev) {
   $('#e-place').value = ev?.place || '';
   $('#e-memo').value = ev?.memo || '';
   $('#e-private').value = ev ? privateNote('event', ev.id) : '';
+  // 나만 보기는 내가 만든 일정에만 켤 수 있다 (RLS가 created_by로 막는다)
+  const mineOk = !ev || ev.created_by === state.me?.email;
+  $('#e-only-me').checked = !!ev?.private;
+  $('#e-only-me').disabled = !mineOk;
+  syncOnlyMe();
   syncEventHint();
   $('#event-dialog').showModal();
   if (!ev) $('#e-title').focus();
@@ -2325,6 +2401,14 @@ $('#e-owner').addEventListener('click', e => {
   state.eventOwner = b.dataset.email || null;
   renderOwnerSeg('#e-owner', state.eventOwner, true);
 });
+function syncOnlyMe() {
+  const on = $('#e-only-me').checked;
+  if (on) { state.eventOwner = state.me.email; renderOwnerSeg('#e-owner', state.eventOwner, true); }
+  $('#e-owner').classList.toggle('hidden', on);
+  $('#e-only-hint').textContent = $('#e-only-me').disabled ? '상대가 만든 일정이라 나만 보기로 바꿀 수 없어요'
+    : on ? '나만 보여요. 상대 달력에는 나오지 않아요' : '';
+}
+$('#e-only-me').addEventListener('change', syncOnlyMe);
 $('#e-date').addEventListener('input', syncEventHint);
 $('#event-cancel').addEventListener('click', () => $('#event-dialog').close());
 $('#event-form').addEventListener('submit', async e => {
@@ -2337,6 +2421,7 @@ $('#event-form').addEventListener('submit', async e => {
     end_time: $('#e-end').value || null,
     place: $('#e-place').value.trim() || null,
     memo: $('#e-memo').value.trim() || null,
+    private: $('#e-only-me').checked,
   };
   const q = state.editingEvent
     ? sb.from('events').update(row).eq('id', state.editingEvent.id).select('id').single()
@@ -2452,6 +2537,189 @@ function renderChores() {
   }).join('') || '<div class="empty">아직 기록이 없어요</div>';
 }
 
+// 내 할 일 -----------------------------------------------------------
+// todos·routines·routine_logs는 RLS로 쓴 사람만 읽는다. 상대 화면엔 아예 안 나온다
+
+const DOW = '월화수목금토일';
+const dowOf = iso => (new Date(iso + 'T00:00:00').getDay() + 6) % 7 + 1; // 1 월요일 … 7 일요일
+function daysLabel(w) {
+  const d = [...w].sort();
+  if (d.length === 7) return '매일';
+  if (d.join() === '1,2,3,4,5') return '평일';
+  if (d.join() === '6,7') return '주말';
+  return d.map(n => DOW[n - 1]).join('·');
+}
+const doneKey = (id, iso) => `${id}|${iso}`;
+
+async function loadMine() {
+  const [todos, routines, logs] = await Promise.all([
+    sb.from('todos').select('*').or(`done_on.is.null,done_on.gte.${addDays(today(), -30)}`).order('created_at'),
+    sb.from('routines').select('*').eq('active', true).order('created_at'),
+    sb.from('routine_logs').select('routine_id, done_on').gte('done_on', addDays(today(), -366)),
+  ]);
+  for (const r of [todos, routines, logs]) if (r.error) return fail(r.error);
+  state.todos = todos.data;
+  state.routines = routines.data;
+  state.routineDone = new Set(logs.data.map(l => doneKey(l.routine_id, l.done_on)));
+  renderMine();
+  renderToday();
+}
+
+// 연속 기록: 하는 요일만 센다. 오늘 아직 안 했으면 어제부터 거슬러 센다
+function streakOf(r) {
+  const born = r.created_at.slice(0, 10);
+  let d = today(), n = 0;
+  if (!state.routineDone.has(doneKey(r.id, d))) d = addDays(d, -1);
+  for (let i = 0; i < 366 && d >= born; i++, d = addDays(d, -1)) {
+    if (!r.weekdays.includes(dowOf(d))) continue;
+    if (!state.routineDone.has(doneKey(r.id, d))) break;
+    n++;
+  }
+  return n;
+}
+
+const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+function routineRow(r, withCheck) {
+  const done = state.routineDone.has(doneKey(r.id, today()));
+  const streak = streakOf(r);
+  return `<div class="chore-row ${withCheck && done ? 'done' : ''}">
+    ${withCheck ? `<button class="check-btn ${done ? 'on' : ''}" type="button" data-rt="${r.id}" aria-pressed="${done}" aria-label="${esc(r.title)} ${done ? '취소' : '했어요'}">${CHECK_SVG}</button>` : ''}
+    <button class="open" type="button" data-routine="${r.id}">
+      <span class="title" style="display:block;font-weight:500">${esc(r.title)}</span>
+      <span class="sub" style="display:block;font-size:13px;color:var(--muted)">${daysLabel(r.weekdays)}</span>
+    </button>
+    ${streak ? `<span class="streak num">${streak}일 연속</span>` : ''}
+  </div>`;
+}
+function todoRow(t) {
+  const done = !!t.done_on;
+  let due = '';
+  if (done) due = `${mmdd(t.done_on)} 끝`;
+  else if (t.due_on) {
+    const diff = daysBetween(today(), t.due_on);
+    due = diff < 0 ? `${-diff}일 지남` : diff === 0 ? '오늘' : diff === 1 ? '내일' : `${mmdd(t.due_on)}까지`;
+  }
+  const late = !done && t.due_on && t.due_on < today();
+  return `<div class="chore-row ${done ? 'done' : ''}">
+    <button class="check-btn ${done ? 'on' : ''}" type="button" data-td="${t.id}" aria-pressed="${done}" aria-label="${esc(t.title)} ${done ? '되돌리기' : '끝'}">${CHECK_SVG}</button>
+    <button class="open" type="button" data-todo="${t.id}">
+      <span class="title" style="display:block;font-weight:500">${esc(t.title)}</span>
+      ${t.memo ? `<span class="sub" style="display:block;font-size:13px;color:var(--muted)">${esc(t.memo)}</span>` : ''}
+    </button>
+    <span class="due num ${late ? 'late' : t.due_on === today() ? 'today' : ''}">${due}</span>
+  </div>`;
+}
+
+function renderMine() {
+  const t = today();
+  const routines = state.routines || [];
+  const todayList = routines.filter(r => r.weekdays.includes(dowOf(t)));
+  const doneToday = todayList.filter(r => state.routineDone.has(doneKey(r.id, t))).length;
+  $('#mine-routine-count').textContent = todayList.length ? `${doneToday}/${todayList.length}` : '';
+  $('#mine-today').innerHTML = todayList.map(r => routineRow(r, true)).join('') ||
+    `<div class="empty">${routines.length ? '오늘은 하는 루틴이 없어요' : '아래 ‘할 일 추가’에서 반복 루틴을 만들어 보세요'}</div>`;
+  const open = (state.todos || []).filter(x => !x.done_on)
+    .sort((a, b) => (a.due_on || '9999').localeCompare(b.due_on || '9999') || a.created_at.localeCompare(b.created_at));
+  $('#mine-todo-count').textContent = open.length ? `${open.length}개` : '';
+  $('#mine-todos').innerHTML = open.map(todoRow).join('') || '<div class="empty">남은 할 일이 없어요</div>';
+  $('#mine-routines').innerHTML = routines.map(r => routineRow(r, false)).join('') || '<div class="empty">아직 루틴이 없어요</div>';
+  const done = (state.todos || []).filter(x => x.done_on).sort((a, b) => b.done_on.localeCompare(a.done_on));
+  $('#mine-done').innerHTML = done.map(todoRow).join('') || '<div class="empty">아직 없어요</div>';
+}
+
+$('#view-mine').addEventListener('click', async e => {
+  const rt = e.target.closest('[data-rt]');
+  const td = e.target.closest('[data-td]');
+  if (rt) {
+    rt.disabled = true;
+    const id = rt.dataset.rt;
+    const on = state.routineDone.has(doneKey(id, today()));
+    const { error } = on
+      ? await sb.from('routine_logs').delete().eq('routine_id', id).eq('done_on', today())
+      : await sb.from('routine_logs').insert({ routine_id: id, done_on: today() });
+    if (error) { rt.disabled = false; return fail(error); }
+    return loadMine();
+  }
+  if (td) {
+    td.disabled = true;
+    const t = state.todos.find(x => x.id === td.dataset.td);
+    const { error } = await sb.from('todos').update({ done_on: t.done_on ? null : today() }).eq('id', t.id);
+    if (error) { td.disabled = false; return fail(error); }
+    if (!t.done_on) toast('끝냈어요');
+    return loadMine();
+  }
+  const todoId = e.target.closest('[data-todo]')?.dataset.todo;
+  if (todoId) return openTodo(state.todos.find(x => x.id === todoId), 'todo');
+  const routineId = e.target.closest('[data-routine]')?.dataset.routine;
+  if (routineId) return openTodo(state.routines.find(x => x.id === routineId), 'routine');
+});
+
+function setTodoKind(kind) {
+  state.todoKind = kind;
+  for (const b of $$('#t-kind button')) b.setAttribute('aria-pressed', b.dataset.v === kind);
+  $('#t-due-wrap').classList.toggle('hidden', kind !== 'todo');
+  $('#t-memo-wrap').classList.toggle('hidden', kind !== 'todo');
+  $('#t-days-wrap').classList.toggle('hidden', kind !== 'routine');
+  $('#t-title').placeholder = kind === 'todo' ? '예: 택배 반품하기' : '예: 영양제 먹기';
+}
+function renderTodoDays() {
+  $('#t-days').innerHTML = [...DOW].map((d, i) =>
+    `<button type="button" data-d="${i + 1}" aria-pressed="${state.todoDays.includes(i + 1)}">${d}</button>`).join('');
+}
+function openTodo(item, kind = 'todo') {
+  state.editingTodo = item || null;
+  $('#todo-dialog-title').textContent = item ? (kind === 'routine' ? '루틴 고치기' : '할 일 고치기') : '할 일 추가';
+  $('#todo-delete').classList.toggle('hidden', !item);
+  // 고칠 때는 종류를 바꾸지 않는다
+  $('#t-kind').classList.toggle('hidden', !!item);
+  setTodoKind(kind);
+  $('#t-title').value = item?.title || '';
+  $('#t-due').value = item?.due_on || '';
+  $('#t-memo').value = item?.memo || '';
+  state.todoDays = item?.weekdays ? [...item.weekdays] : [1, 2, 3, 4, 5, 6, 7];
+  renderTodoDays();
+  $('#todo-dialog').showModal();
+  if (!item) $('#t-title').focus();
+}
+$('#t-kind').addEventListener('click', e => { if (e.target.dataset.v) setTodoKind(e.target.dataset.v); });
+$('#t-days').addEventListener('click', e => {
+  const d = Number(e.target.dataset.d);
+  if (!d) return;
+  state.todoDays = state.todoDays.includes(d) ? state.todoDays.filter(x => x !== d) : [...state.todoDays, d].sort();
+  renderTodoDays();
+});
+$('#todo-cancel').addEventListener('click', () => $('#todo-dialog').close());
+$('#todo-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const title = $('#t-title').value.trim();
+  if (!title) return;
+  const item = state.editingTodo;
+  let res;
+  if (state.todoKind === 'routine') {
+    if (!state.todoDays.length) return toast('하는 요일을 하나 이상 골라 주세요');
+    const row = { title, weekdays: state.todoDays };
+    res = item ? await sb.from('routines').update(row).eq('id', item.id) : await sb.from('routines').insert(row);
+  } else {
+    const row = { title, due_on: $('#t-due').value || null, memo: $('#t-memo').value.trim() || null };
+    res = item ? await sb.from('todos').update(row).eq('id', item.id) : await sb.from('todos').insert(row);
+  }
+  if (res.error) return fail(res.error);
+  $('#todo-dialog').close();
+  toast('저장했어요');
+  loadMine();
+});
+$('#todo-delete').addEventListener('click', async () => {
+  const item = state.editingTodo;
+  const table = state.todoKind === 'routine' ? 'routines' : 'todos';
+  const extra = table === 'routines' ? ' 연속 기록도 같이 지워져요.' : '';
+  if (!item || !confirm(`‘${item.title}’을(를) 지울까요?${extra}`)) return;
+  const { error } = await sb.from(table).delete().eq('id', item.id);
+  if (error) return fail(error);
+  $('#todo-dialog').close();
+  toast('지웠어요');
+  loadMine();
+});
+
 function renderToday() {
   const t = today();
   const events = (state.upcoming || []).filter(ev => ev.date === t);
@@ -2469,6 +2737,18 @@ function renderToday() {
     <span class="avatar" style="--c:${due.length ? 'var(--accent)' : 'var(--muted)'}">${icon('can')}</span>
     <span class="body"><span class="title">${due.length ? `집안일 ${due.length}개 남았어요` : '오늘 집안일 끝'}</span>
       <span class="sub">${esc(due.slice(0, 3).map(c => c.title).join(', '))}</span></span>${ICONS.chev}</button>`);
+  // 나만 보는 루틴·할 일 (있을 때만)
+  const myRoutines = (state.routines || []).filter(r => r.weekdays.includes(dowOf(t)));
+  const myDue = (state.todos || []).filter(x => !x.done_on && x.due_on && x.due_on <= t);
+  if (myRoutines.length || myDue.length) {
+    const doneN = myRoutines.filter(r => state.routineDone?.has(doneKey(r.id, t))).length;
+    const left = myRoutines.filter(r => !state.routineDone?.has(doneKey(r.id, t)));
+    const title = [myRoutines.length ? `오늘 루틴 ${doneN}/${myRoutines.length}` : null, myDue.length ? `할 일 ${myDue.length}개` : null].filter(Boolean).join(' · ');
+    parts.push(`<button class="row" type="button" data-goto-view="mine">
+      <span class="avatar" style="--c:var(--amber)">${icon('star')}</span>
+      <span class="body"><span class="title">${title}</span>
+        <span class="sub">${esc([...left, ...myDue].slice(0, 3).map(x => x.title).join(', ')) || '오늘 루틴 다 했어요'}</span></span>${ICONS.chev}</button>`);
+  }
   if (week.length) parts.push(week.map(ev => eventRow(ev, true)).join(''));
   parts.push('</div>');
   $('#today-block').innerHTML = parts.join('');
@@ -3166,6 +3446,7 @@ function scheduleRefresh(table) {
   if (!table || table === 'private_notes') pending.private = true;
   if (!table || table === 'notices') pending.notices = true;
   if (!table || table === 'inbox') pending.inbox = true;
+  if (!table || ['todos', 'routines', 'routine_logs'].includes(table)) pending.mine = true;
   if (!table || table === 'docs' || table === 'doc_files') pending.docs = true;
   clearTimeout(refreshTimer);
   refreshTimer = setTimeout(flushRefresh, 400);
@@ -3178,7 +3459,7 @@ async function flushRefresh() {
   pending = { month: false, chores: false, statics: false };
   if (job.statics) await loadStatic();
   if (job.private) { await loadPrivate(); job.month = job.chores = true; }
-  await Promise.all([job.month && loadMonth(), job.chores && loadChores(), job.notices && loadNotices(), job.docs && loadDocs(), job.inbox && loadInbox(),
+  await Promise.all([job.month && loadMonth(), job.chores && loadChores(), job.notices && loadNotices(), job.docs && loadDocs(), job.inbox && loadInbox(), job.mine && loadMine(),
     state.view === 'notes' && renderNotes()]);
 }
 

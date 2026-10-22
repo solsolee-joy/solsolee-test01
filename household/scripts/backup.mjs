@@ -8,7 +8,8 @@ import { dirname, join } from 'node:path';
 
 // 외래 키 순서 (넣을 때 이 순서대로)
 export const TABLES = ['members', 'envelopes', 'debts', 'settings', 'rules', 'budgets', 'transactions', 'recurring',
-  'notes', 'notices', 'events', 'chores', 'chore_logs', 'private_notes', 'docs', 'doc_files', 'inbox'];
+  'notes', 'notices', 'events', 'chores', 'chore_logs', 'private_notes', 'docs', 'doc_files', 'inbox',
+  'todos', 'routines', 'routine_logs'];
 
 const [ref, out] = process.argv.slice(2);
 if (!ref || !out) {
