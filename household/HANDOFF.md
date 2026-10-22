@@ -36,7 +36,7 @@
     Auth 사용자는 옮기지 않았다 (새별은 메일 링크로 다시 들어와 비밀번호를 다시 정한다)
   - 참고: 이 계정에선 Supabase MCP 커넥터가 새 프로젝트에 권한이 없다. SQL은 CLI `db query --linked --project-ref`로 돌린다
     (여러 줄 SQL은 -f 파일로. 가끔 멈추면 timeout 걸고 다시)
-- [ ] 3. 새 프로젝트 Authentication → URL Configuration (새별): Site URL `https://twoclocks.pages.dev`,
+- [x] 3. 새 프로젝트 Authentication → URL Configuration (새별, 2026-10-22 설정함. 메일 링크 로그인은 아직 안 써 봄): Site URL `https://twoclocks.pages.dev`,
   Redirect URLs에 `https://twoclocks.pages.dev`와 GitHub 옛 주소 둘 다. 이게 돼야 메일 링크 로그인이 된다.
   manifest는 상대 경로라 고칠 것 없음. 연표에겐 새 주소로 홈 화면 아이콘을 추가하게 한다
 - [ ] 아직 실제로 못 써 본 기능을 새별 휴대폰으로 확인
