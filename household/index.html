@@ -415,6 +415,23 @@ dialog::backdrop { background: var(--scrim); }
 /* 내 할 일 */
 .streak { font-size: 13px; font-weight: 600; color: var(--amber); white-space: nowrap; }
 .chore-row.done .title { color: var(--muted); text-decoration: line-through; }
+.chore-row.child { padding: 8px 0 8px 28px; }
+.chore-row.child + .chore-row.child { border-top: 0; }
+.chore-row.child .check-btn { width: 22px; height: 22px; }
+.chore-row.child .check-btn svg { width: 13px; height: 13px; }
+.chore-row.child .title { font-size: 14px; }
+.tag.ev-tag { display: inline-block; margin-top: 4px; background: color-mix(in srgb, var(--plus) 12%, transparent); color: var(--plus); cursor: pointer; }
+#t-subs-wrap { grid-column: 1 / -1; }
+#t-subs-wrap .lbl { font-size: 13px; font-weight: 500; color: var(--muted); }
+.sub-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.sub-item .t { flex: 1; min-width: 0; font-size: 15px; }
+.sub-item.done .t { color: var(--muted); text-decoration: line-through; }
+.sub-item .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--fill-strong); margin: 0 7px; }
+.sub-item .check-btn { width: 22px; height: 22px; }
+.sub-item .del { border: 0; background: none; color: var(--muted); font-size: 18px; padding: 2px 6px; }
+.sub-add { display: flex; gap: 8px; margin-top: 8px; }
+.sub-add input { flex: 1; min-width: 0; }
+.sub-add .btn { min-width: 0; padding: 10px 14px; }
 .mine-note { text-align: center; font-size: 13px; color: var(--muted); margin: 4px 0 24px; }
 .weekdays { display: flex; gap: 6px; margin-top: 6px; }
 .weekdays button { flex: 1; border: 0; padding: 10px 0; border-radius: 10px; background: var(--fill); color: var(--muted); font-weight: 600; }
@@ -1086,7 +1103,12 @@ body {
       <label class="full">무엇을<input id="t-title" required autocomplete="off"></label>
       <label class="full" id="t-due-wrap">언제까지 (비워도 돼요)<input id="t-due" type="date"></label>
       <div class="full hidden" id="t-days-wrap"><span class="lbl">하는 요일</span><div class="weekdays" id="t-days"></div></div>
+      <label class="full" id="t-event-wrap">연결할 일정<select id="t-event"><option value="">없음</option></select></label>
       <label class="full" id="t-memo-wrap">메모<textarea id="t-memo"></textarea></label>
+      <div class="full hidden" id="t-subs-wrap"><span class="lbl">하위 할 일</span>
+        <div id="t-subs"></div>
+        <div class="sub-add"><input id="t-sub-new" autocomplete="off" placeholder="하위 할 일 추가"><button class="btn" type="button" id="t-sub-add">추가</button></div>
+      </div>
     </div>
     <div class="actions">
       <button class="btn danger hidden" id="todo-delete" type="button">삭제</button>
@@ -2228,6 +2250,10 @@ function eventOrder(a, b) {
 const hhmm = t => t ? t.slice(0, 5) : '';
 const isSat = iso => new Date(iso + 'T00:00:00').getDay() === 6;
 
+const todoCountTag = id => {
+  const n = (state.todos || []).filter(x => x.event_id === id && !x.done_on).length;
+  return n ? ` <span class="tag">할 일 ${n}</span>` : '';
+};
 function eventRow(ev, showDate = false) {
   const p = person(ev.owner);
   const time = ev.start_time ? hhmm(ev.start_time) : '종일';
@@ -2236,7 +2262,7 @@ function eventRow(ev, showDate = false) {
   return `<button class="row" type="button" data-event="${esc(ev.id)}">
     ${whoMark(p)}
     <span class="time num">${time}</span>
-    <span class="body"><span class="title">${esc(ev.title)}${ev.private ? ` <span class="tag lock-tag">${LOCK_SVG} 나만</span>` : ''}${!ev.private && privateNote('event', ev.id) ? ` <span class="tag lock-tag"><svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>` : ''}</span><span class="sub">${esc(sub)}</span></span>
+    <span class="body"><span class="title">${esc(ev.title)}${ev.private ? ` <span class="tag lock-tag">${LOCK_SVG} 나만</span>` : ''}${todoCountTag(ev.id)}${!ev.private && privateNote('event', ev.id) ? ` <span class="tag lock-tag"><svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>` : ''}</span><span class="sub">${esc(sub)}</span></span>
   </button>`;
 }
 
@@ -2487,7 +2513,7 @@ $('#event-delete').addEventListener('click', async () => {
 });
 document.addEventListener('click', e => {
   const id = e.target.closest('[data-event]')?.dataset.event;
-  if (id) openEvent(state.events.find(ev => ev.id === id) || state.upcoming?.find(ev => ev.id === id) || state.weekEvents?.find(ev => ev.id === id));
+  if (id) openEvent(state.events.find(ev => ev.id === id) || state.upcoming?.find(ev => ev.id === id) || state.weekEvents?.find(ev => ev.id === id) || state.todoEvents?.get(id));
 });
 
 // 집안일 -------------------------------------------------------------
@@ -2600,6 +2626,11 @@ async function loadMine() {
   for (const r of [todos, routines, logs]) if (r.error) return fail(r.error);
   state.todos = todos.data;
   state.routines = routines.data;
+  // 할 일에 연결된 일정 (다른 달이어도 태그에 이름이 보이게)
+  const linked = [...new Set(todos.data.map(x => x.event_id).filter(Boolean))];
+  const evs = linked.length ? await sb.from('events').select('*').in('id', linked) : { data: [] };
+  if (evs.error) return fail(evs.error);
+  state.todoEvents = new Map(evs.data.map(ev => [ev.id, ev]));
   state.routineDone = new Set(logs.data.map(l => doneKey(l.routine_id, l.done_on)));
   renderMine();
   renderToday();
@@ -2632,8 +2663,15 @@ function routineRow(r, withCheck) {
     ${streak ? `<span class="streak num">${streak}일 연속</span>` : ''}
   </div>`;
 }
-function todoRow(t) {
+const childrenOf = id => (state.todos || []).filter(x => x.parent_id === id);
+function todoRow(t, isChild = false) {
   const done = !!t.done_on;
+  const kids = isChild ? [] : childrenOf(t.id);
+  const ev = t.event_id && state.todoEvents?.get(t.event_id);
+  const sub = [
+    kids.length ? `하위 ${kids.filter(k => k.done_on).length}/${kids.length}` : null,
+    t.memo ? esc(t.memo) : null,
+  ].filter(Boolean).join(' · ');
   let due = '';
   if (done) due = `${mmdd(t.done_on)} 끝`;
   else if (t.due_on) {
@@ -2641,14 +2679,15 @@ function todoRow(t) {
     due = diff < 0 ? `${-diff}일 지남` : diff === 0 ? '오늘' : diff === 1 ? '내일' : `${mmdd(t.due_on)}까지`;
   }
   const late = !done && t.due_on && t.due_on < today();
-  return `<div class="chore-row ${done ? 'done' : ''}">
+  return `<div class="chore-row ${done ? 'done' : ''} ${isChild ? 'child' : ''}">
     <button class="check-btn ${done ? 'on' : ''}" type="button" data-td="${t.id}" aria-pressed="${done}" aria-label="${esc(t.title)} ${done ? '되돌리기' : '끝'}">${CHECK_SVG}</button>
     <button class="open" type="button" data-todo="${t.id}">
       <span class="title" style="display:block;font-weight:500">${esc(t.title)}</span>
-      ${t.memo ? `<span class="sub" style="display:block;font-size:13px;color:var(--muted)">${esc(t.memo)}</span>` : ''}
+      ${sub ? `<span class="sub" style="display:block;font-size:13px;color:var(--muted)">${sub}</span>` : ''}
+      ${ev ? `<span class="tag ev-tag" data-event="${esc(ev.id)}">${mmdd(ev.date)} ${esc(ev.title)}</span>` : ''}
     </button>
     <span class="due num ${late ? 'late' : t.due_on === today() ? 'today' : ''}">${due}</span>
-  </div>`;
+  </div>` + kids.sort((a, b) => !!a.done_on - !!b.done_on || a.created_at.localeCompare(b.created_at)).map(k => todoRow(k, true)).join('');
 }
 
 function renderMine() {
@@ -2659,16 +2698,17 @@ function renderMine() {
   $('#mine-routine-count').textContent = todayList.length ? `${doneToday}/${todayList.length}` : '';
   $('#mine-today').innerHTML = todayList.map(r => routineRow(r, true)).join('') ||
     `<div class="empty">${routines.length ? '오늘은 하는 루틴이 없어요' : '아래 ‘할 일 추가’에서 반복 루틴을 만들어 보세요'}</div>`;
-  const open = (state.todos || []).filter(x => !x.done_on)
+  const open = (state.todos || []).filter(x => !x.done_on && !x.parent_id)
     .sort((a, b) => (a.due_on || '9999').localeCompare(b.due_on || '9999') || a.created_at.localeCompare(b.created_at));
   $('#mine-todo-count').textContent = open.length ? `${open.length}개` : '';
-  $('#mine-todos').innerHTML = open.map(todoRow).join('') || '<div class="empty">남은 할 일이 없어요</div>';
+  $('#mine-todos').innerHTML = open.map(t => todoRow(t)).join('') || '<div class="empty">남은 할 일이 없어요</div>';
   $('#mine-routines').innerHTML = routines.map(r => routineRow(r, false)).join('') || '<div class="empty">아직 루틴이 없어요</div>';
-  const done = (state.todos || []).filter(x => x.done_on).sort((a, b) => b.done_on.localeCompare(a.done_on));
-  $('#mine-done').innerHTML = done.map(todoRow).join('') || '<div class="empty">아직 없어요</div>';
+  const done = (state.todos || []).filter(x => x.done_on && !x.parent_id).sort((a, b) => b.done_on.localeCompare(a.done_on));
+  $('#mine-done').innerHTML = done.map(t => todoRow(t)).join('') || '<div class="empty">아직 없어요</div>';
 }
 
 $('#view-mine').addEventListener('click', async e => {
+  if (e.target.closest('.ev-tag')) return; // 일정 열기는 아래 공통 처리
   const rt = e.target.closest('[data-rt]');
   const td = e.target.closest('[data-td]');
   if (rt) {
@@ -2700,6 +2740,9 @@ function setTodoKind(kind) {
   for (const b of $$('#t-kind button')) b.setAttribute('aria-pressed', b.dataset.v === kind);
   $('#t-due-wrap').classList.toggle('hidden', kind !== 'todo');
   $('#t-memo-wrap').classList.toggle('hidden', kind !== 'todo');
+  $('#t-event-wrap').classList.toggle('hidden', kind !== 'todo');
+  // 하위 할 일은 맨 위 할 일에만 (한 단계까지)
+  $('#t-subs-wrap').classList.toggle('hidden', kind !== 'todo' || !!state.editingTodo?.parent_id);
   $('#t-days-wrap').classList.toggle('hidden', kind !== 'routine');
   $('#t-title').placeholder = kind === 'todo' ? '예: 택배 반품하기' : '예: 영양제 먹기';
 }
@@ -2719,9 +2762,64 @@ function openTodo(item, kind = 'todo') {
   $('#t-memo').value = item?.memo || '';
   state.todoDays = item?.weekdays ? [...item.weekdays] : [1, 2, 3, 4, 5, 6, 7];
   renderTodoDays();
+  state.pendingSubs = [];
+  renderTodoSubs();
+  $('#t-sub-new').value = '';
+  fillTodoEvents(item?.event_id);
   $('#todo-dialog').showModal();
   if (!item) $('#t-title').focus();
 }
+// 연결할 일정: 지난 1주 ~ 앞으로 3달. 이미 연결된 게 범위 밖이면 그것도 넣는다
+async function fillTodoEvents(selected) {
+  const sel = $('#t-event');
+  sel.innerHTML = '<option value="">없음</option>';
+  const { data, error } = await sb.from('events').select('id, date, start_time, title, private')
+    .gte('date', addDays(today(), -7)).lte('date', addDays(today(), 92)).order('date').order('start_time');
+  if (error) return fail(error);
+  const list = [...data];
+  const cur = selected && state.todoEvents?.get(selected);
+  if (cur && !list.some(ev => ev.id === cur.id)) list.unshift(cur);
+  sel.innerHTML += list.map(ev => `<option value="${esc(ev.id)}">${mmdd(ev.date)}(${weekday(ev.date)})${ev.start_time ? ' ' + hhmm(ev.start_time) : ''} ${esc(ev.title)}${ev.private ? ' · 나만' : ''}</option>`).join('');
+  sel.value = selected || '';
+}
+// 하위 할 일: 고칠 때는 바로 저장, 새로 만들 때는 모아 뒀다가 저장할 때 같이 넣는다
+function renderTodoSubs() {
+  const item = state.editingTodo;
+  const subs = item ? childrenOf(item.id) : state.pendingSubs.map((title, i) => ({ id: `new${i}`, title }));
+  $('#t-subs').innerHTML = subs.map(k => `<div class="sub-item ${k.done_on ? 'done' : ''}">
+      ${item ? `<button class="check-btn ${k.done_on ? 'on' : ''}" type="button" data-sub-done="${k.id}" aria-label="${esc(k.title)}">${CHECK_SVG}</button>` : '<span class="dot"></span>'}
+      <span class="t">${esc(k.title)}</span>
+      <button class="del" type="button" data-sub-del="${k.id}" aria-label="${esc(k.title)} 지우기">×</button>
+    </div>`).join('');
+}
+async function addTodoSub() {
+  const title = $('#t-sub-new').value.trim();
+  if (!title) return;
+  $('#t-sub-new').value = '';
+  const item = state.editingTodo;
+  if (!item) { state.pendingSubs.push(title); return renderTodoSubs(); }
+  const { error } = await sb.from('todos').insert({ title, parent_id: item.id });
+  if (error) return fail(error);
+  await loadMine();
+  renderTodoSubs();
+}
+$('#t-sub-add').addEventListener('click', addTodoSub);
+$('#t-sub-new').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addTodoSub(); } });
+$('#t-subs').addEventListener('click', async e => {
+  const doneId = e.target.closest('[data-sub-done]')?.dataset.subDone;
+  const delId = e.target.closest('[data-sub-del]')?.dataset.subDel;
+  if (delId?.startsWith('new')) { state.pendingSubs.splice(Number(delId.slice(3)), 1); return renderTodoSubs(); }
+  if (doneId) {
+    const k = state.todos.find(x => x.id === doneId);
+    const { error } = await sb.from('todos').update({ done_on: k.done_on ? null : today() }).eq('id', k.id);
+    if (error) return fail(error);
+  } else if (delId) {
+    const { error } = await sb.from('todos').delete().eq('id', delId);
+    if (error) return fail(error);
+  } else return;
+  await loadMine();
+  renderTodoSubs();
+});
 $('#t-kind').addEventListener('click', e => { if (e.target.dataset.v) setTodoKind(e.target.dataset.v); });
 $('#t-days').addEventListener('click', e => {
   const d = Number(e.target.dataset.d);
@@ -2741,8 +2839,11 @@ $('#todo-form').addEventListener('submit', async e => {
     const row = { title, weekdays: state.todoDays };
     res = item ? await sb.from('routines').update(row).eq('id', item.id) : await sb.from('routines').insert(row);
   } else {
-    const row = { title, due_on: $('#t-due').value || null, memo: $('#t-memo').value.trim() || null };
-    res = item ? await sb.from('todos').update(row).eq('id', item.id) : await sb.from('todos').insert(row);
+    const row = { title, due_on: $('#t-due').value || null, memo: $('#t-memo').value.trim() || null, event_id: $('#t-event').value || null };
+    res = item ? await sb.from('todos').update(row).eq('id', item.id) : await sb.from('todos').insert(row).select('id').single();
+    if (!res.error && !item && state.pendingSubs.length) {
+      res = await sb.from('todos').insert(state.pendingSubs.map(t => ({ title: t, parent_id: res.data.id })));
+    }
   }
   if (res.error) return fail(res.error);
   $('#todo-dialog').close();
@@ -2752,7 +2853,7 @@ $('#todo-form').addEventListener('submit', async e => {
 $('#todo-delete').addEventListener('click', async () => {
   const item = state.editingTodo;
   const table = state.todoKind === 'routine' ? 'routines' : 'todos';
-  const extra = table === 'routines' ? ' 연속 기록도 같이 지워져요.' : '';
+  const extra = table === 'routines' ? ' 연속 기록도 같이 지워져요.' : childrenOf(item?.id).length ? ' 하위 할 일도 같이 지워져요.' : '';
   if (!item || !confirm(`‘${item.title}’을(를) 지울까요?${extra}`)) return;
   const { error } = await sb.from(table).delete().eq('id', item.id);
   if (error) return fail(error);
