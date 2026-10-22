@@ -439,6 +439,13 @@ dialog::backdrop { background: var(--scrim); }
 .quick-add input:focus, .quick-add select:focus { outline: 2px solid var(--accent); }
 .quick-add .btn { min-width: 0; padding: 10px 14px; }
 .quick-add.sub-qa { margin: 4px 0 10px 28px; }
+.quick-add.qa-detail { flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.qa-opts { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+.qa-opts label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); flex: 1 1 130px; min-width: 0; }
+.qa-opts input, .qa-opts select { width: 100%; padding: 9px 12px; border: 0; border-radius: 10px; background: var(--fill); font-size: 14px; color: var(--text); }
+.qa-opts .weekdays { flex: 1; margin-top: 0; }
+.qa-opts .weekdays button { padding: 8px 0; }
+.qa-opts .qa-who { flex: 1 1 100%; margin: 0; }
 .add-sub { width: 28px; height: 28px; flex-shrink: 0; border: 0; border-radius: 50%; background: var(--fill); color: var(--muted); font-size: 18px; line-height: 28px; padding: 0; }
 .add-sub[aria-expanded="true"] { background: var(--accent); color: var(--on-accent); }
 .block-head:has(.head-add) { align-items: center; }
@@ -780,6 +787,20 @@ nav.tabs button[aria-current="page"] .ico { opacity: 1; filter: none; transform:
 .week-grid .sq svg { width: 58%; height: 58%; }
 .week-grid .sq b { font-weight: 700; font-size: 11px; }
 .week-grid .sq.future { opacity: .35; }
+/* 루틴 이름은 한 줄을 다 쓰고, 그 아래 요일 칸 일곱 개 */
+.week-grid.routine-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); row-gap: 4px; }
+.routine-grid .rname { grid-column: 1 / -1; margin-top: 8px; }
+.routine-grid .wh small { display: block; font-size: 10px; }
+.routine-grid button.sq { background: none; padding: 0; cursor: pointer; }
+.routine-grid button.sq.on { background: color-mix(in srgb, var(--accent) 60%, transparent); }
+.routine-grid .sq.off { border-style: dashed; opacity: .3; }
+.routine-grid .rname { border: 0; background: none; padding: 0; text-align: left; min-width: 0; display: flex; align-items: baseline; gap: 8px; }
+.routine-grid .rname b { font-size: 14px; font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.routine-grid .rname small { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.routine-grid .rname .streak { font-style: normal; font-size: 11px; }
+.rw-nav { display: inline-flex; align-items: center; gap: 2px; }
+.rw-nav button { border: 0; background: none; color: var(--muted); font-size: 18px; padding: 0 6px; line-height: 1; }
+.rw-nav button:disabled { opacity: .25; }
 #chores-week { grid-column: 1 / -1; }
 
 /* 자료 분류: 서류 폴더 탭 */
@@ -960,12 +981,14 @@ body {
       </div>
       <div class="block">
         <div class="block-head"><h2>할 일</h2><span class="aside num" id="mine-todo-count"></span><button class="head-add" type="button" data-qa-open="todo" aria-expanded="false" aria-label="할 일 추가">+</button></div>
-        <form class="quick-add hidden" data-qa="todo"><input autocomplete="off" required maxlength="200" placeholder="할 일 적고 엔터"><button class="btn" type="submit">추가</button></form>
+        <form class="quick-add qa-detail hidden" data-qa="todo"><input name="title" autocomplete="off" required maxlength="200" enterkeyhint="done" placeholder="할 일 적고 엔터">
+          <div class="qa-opts"><label>기한<input type="date" name="due"></label><label>일정<select name="event"><option value="">없음</option></select></label></div></form>
         <div id="mine-todos"></div>
       </div>
       <div class="block">
-        <div class="block-head"><h2>내 루틴</h2><span class="aside">연속 기록</span><button class="head-add" type="button" data-qa-open="routine" aria-expanded="false" aria-label="루틴 추가">+</button></div>
-        <form class="quick-add hidden" data-qa="routine"><input autocomplete="off" required maxlength="200" placeholder="루틴 적고 엔터 (매일)"><button class="btn" type="submit">추가</button></form>
+        <div class="block-head"><h2>내 루틴</h2><span class="rw-nav aside"><button type="button" data-rw="-1" aria-label="지난주">‹</button><span id="rw-label" class="num"></span><button type="button" data-rw="1" aria-label="다음 주">›</button></span><button class="head-add" type="button" data-qa-open="routine" aria-expanded="false" aria-label="루틴 추가">+</button></div>
+        <form class="quick-add qa-detail hidden" data-qa="routine"><input name="title" autocomplete="off" required maxlength="200" enterkeyhint="done" placeholder="루틴 적고 엔터">
+          <div class="qa-opts"><div class="weekdays" data-qa-days></div></div></form>
         <div id="mine-routines"></div>
       </div>
       <div class="block">
@@ -982,7 +1005,9 @@ body {
       </div>
       <div class="block">
         <div class="block-head"><h2>오늘까지</h2><span class="aside num" id="chores-due-count"></span><button class="head-add" type="button" data-qa-open="chore" aria-expanded="false" aria-label="집안일 추가">+</button></div>
-        <form class="quick-add hidden" data-qa="chore"><input autocomplete="off" required maxlength="200" placeholder="집안일 적고 엔터"><select aria-label="얼마나 자주"><option value="">한 번만</option><option value="1">매일</option><option value="3">3일마다</option><option value="7">매주</option><option value="14">2주마다</option><option value="30">한 달마다</option></select><button class="btn" type="submit">추가</button></form>
+        <form class="quick-add qa-detail hidden" data-qa="chore"><input name="title" autocomplete="off" required maxlength="200" enterkeyhint="done" placeholder="집안일 적고 엔터">
+          <div class="qa-opts"><label>얼마나 자주<select name="repeat"><option value="">한 번만</option><option value="1">매일</option><option value="3">3일마다</option><option value="7">매주</option><option value="14">2주마다</option><option value="30">한 달마다</option></select></label>
+          <label>할 날<input type="date" name="due"></label><div class="seg qa-who" data-qa-who></div></div></form>
         <div id="chores-due"></div>
       </div>
       <div class="block">
@@ -2705,7 +2730,7 @@ function todoRow(t, isChild = false) {
     <span class="due num ${late ? 'late' : t.due_on === today() ? 'today' : ''}">${due}</span>
     ${!isChild && !done ? `<button class="add-sub" type="button" data-add-sub="${t.id}" aria-expanded="${state.subOpen === t.id}" aria-label="${esc(t.title)}에 하위 할 일 추가">+</button>` : ''}
   </div>` + kids.sort((a, b) => !!a.done_on - !!b.done_on || a.created_at.localeCompare(b.created_at)).map(k => todoRow(k, true)).join('')
-    + (state.subOpen === t.id ? `<form class="quick-add sub-qa" data-qa="sub" data-parent="${t.id}"><input autocomplete="off" required maxlength="200" placeholder="하위 할 일 적고 엔터"><button class="btn" type="submit">추가</button></form>` : '');
+    + (state.subOpen === t.id ? `<form class="quick-add sub-qa" data-qa="sub" data-parent="${t.id}"><input name="title" autocomplete="off" required maxlength="200" enterkeyhint="done" placeholder="하위 할 일 적고 엔터"></form>` : '');
 }
 // 하위 입력 칸을 열고 닫는다. 다시 그린 뒤에도 커서가 칸에 남게 한다
 function toggleSubInput(id) {
@@ -2726,28 +2751,55 @@ function renderMine() {
     .sort((a, b) => (a.due_on || '9999').localeCompare(b.due_on || '9999') || a.created_at.localeCompare(b.created_at));
   $('#mine-todo-count').textContent = open.length ? `${open.length}개` : '';
   $('#mine-todos').innerHTML = open.map(t => todoRow(t)).join('') || '<div class="empty">남은 할 일이 없어요</div>';
-  $('#mine-routines').innerHTML = routines.map(r => routineRow(r, false)).join('') || '<div class="empty">아직 루틴이 없어요</div>';
+  renderRoutineWeek(routines);
   const done = (state.todos || []).filter(x => x.done_on && !x.parent_id).sort((a, b) => b.done_on.localeCompare(a.done_on));
   $('#mine-done').innerHTML = done.map(t => todoRow(t)).join('') || '<div class="empty">아직 없어요</div>';
 }
 
+// 루틴 주간 표: 루틴 × 월~일. 칸을 눌러 그날 한 것으로 표시하거나 취소한다. ‹ ›로 지난주를 본다
+function renderRoutineWeek(routines) {
+  const mon = addDays(mondayOf(today()), (state.routineWeek || 0) * 7);
+  const days = [...Array(7)].map((_, i) => addDays(mon, i));
+  const t = today();
+  $('#rw-label').textContent = state.routineWeek ? `${mmdd(days[0])}~${mmdd(days[6])}` : '이번 주';
+  $('[data-rw="1"]').disabled = !state.routineWeek;
+  if (!routines.length) { $('#mine-routines').innerHTML = '<div class="empty">아직 루틴이 없어요</div>'; return; }
+  let html = days.map((d, i) => `<span class="wh ${d === t ? 'today' : ''}">${DOW[i]}<small class="num">${Number(d.slice(8))}</small></span>`).join('');
+  for (const r of routines) {
+    const streak = streakOf(r);
+    html += `<button class="rname" type="button" data-routine="${r.id}"><b>${esc(r.title)}</b>
+      <small>${daysLabel(r.weekdays)}${streak ? ` · <em class="streak">${streak}일 연속</em>` : ''}</small></button>`;
+    html += days.map(d => {
+      const planned = r.weekdays.includes(dowOf(d)) && d >= r.created_at.slice(0, 10);
+      const done = state.routineDone.has(doneKey(r.id, d));
+      if (!planned && !done) return '<span class="sq off" aria-hidden="true"></span>';
+      return `<button type="button" class="sq ${done ? 'on' : ''} ${d > t ? 'future' : ''}" style="--c:var(--accent);--n:1" data-rcell="${r.id}|${d}"
+        ${d > t ? 'disabled' : ''} aria-pressed="${done}" aria-label="${esc(r.title)} ${mmdd(d)}">${done ? CHECK_SVG : ''}</button>`;
+    }).join('');
+  }
+  $('#mine-routines').innerHTML = `<div class="week-grid routine-grid">${html}</div>`;
+}
+async function toggleRoutineDay(id, d) {
+  const on = state.routineDone.has(doneKey(id, d));
+  const { error } = on
+    ? await sb.from('routine_logs').delete().eq('routine_id', id).eq('done_on', d)
+    : await sb.from('routine_logs').insert({ routine_id: id, done_on: d });
+  if (error) return fail(error);
+  return loadMine();
+}
+
 $('#view-mine').addEventListener('click', async e => {
   if (e.target.closest('.ev-tag')) return; // 일정 열기는 아래 공통 처리
+  const rw = Number(e.target.closest('[data-rw]')?.dataset.rw);
+  if (rw) { state.routineWeek = Math.min(0, (state.routineWeek || 0) + rw); return renderMine(); }
+  const cell = e.target.closest('[data-rcell]');
+  if (cell) { cell.disabled = true; const [id, d] = cell.dataset.rcell.split('|'); return toggleRoutineDay(id, d); }
   const addSub = e.target.closest('[data-add-sub]')?.dataset.addSub;
   if (addSub) return toggleSubInput(addSub);
   if (e.target.closest('.sub-qa')) return;
   const rt = e.target.closest('[data-rt]');
   const td = e.target.closest('[data-td]');
-  if (rt) {
-    rt.disabled = true;
-    const id = rt.dataset.rt;
-    const on = state.routineDone.has(doneKey(id, today()));
-    const { error } = on
-      ? await sb.from('routine_logs').delete().eq('routine_id', id).eq('done_on', today())
-      : await sb.from('routine_logs').insert({ routine_id: id, done_on: today() });
-    if (error) { rt.disabled = false; return fail(error); }
-    return loadMine();
-  }
+  if (rt) { rt.disabled = true; return toggleRoutineDay(rt.dataset.rt, today()); }
   if (td) {
     td.disabled = true;
     const t = state.todos.find(x => x.id === td.dataset.td);
@@ -2797,8 +2849,7 @@ function openTodo(item, kind = 'todo') {
   if (!item) $('#t-title').focus();
 }
 // 연결할 일정: 지난 1주 ~ 앞으로 3달. 이미 연결된 게 범위 밖이면 그것도 넣는다
-async function fillTodoEvents(selected) {
-  const sel = $('#t-event');
+async function fillTodoEvents(selected, sel = $('#t-event')) {
   sel.innerHTML = '<option value="">없음</option>';
   const { data, error } = await sb.from('events').select('id, date, start_time, title, private')
     .gte('date', addDays(today(), -7)).lte('date', addDays(today(), 92)).order('date').order('start_time');
@@ -2854,17 +2905,17 @@ document.addEventListener('submit', async e => {
   const form = e.target.closest('.quick-add');
   if (!form) return;
   e.preventDefault();
-  const input = form.querySelector('input');
+  const input = form.elements.title;
   const title = input.value.trim();
-  if (!title) return;
+  if (!title || form.dataset.busy) return;
   const kind = form.dataset.qa;
-  const btn = form.querySelector('button');
-  btn.disabled = true;
+  const f = form.elements;
+  form.dataset.busy = '1';
   const { error } = kind === 'sub' ? await sb.from('todos').insert({ title, parent_id: form.dataset.parent })
-    : kind === 'todo' ? await sb.from('todos').insert({ title })
-    : kind === 'routine' ? await sb.from('routines').insert({ title })
-    : await sb.from('chores').insert({ title, due_on: today(), repeat_days: Number(form.querySelector('select').value) || null });
-  btn.disabled = false;
+    : kind === 'todo' ? await sb.from('todos').insert({ title, due_on: f.due.value || null, event_id: f.event.value || null })
+    : kind === 'routine' ? await sb.from('routines').insert({ title, weekdays: state.qaDays })
+    : await sb.from('chores').insert({ title, due_on: f.due.value || today(), repeat_days: Number(f.repeat.value) || null, assignee: state.qaWho });
+  delete form.dataset.busy;
   if (error) return fail(error);
   input.value = '';
   input.focus();
@@ -2878,13 +2929,39 @@ function toggleQuickAdd(kind, open) {
   const show = open ?? form.classList.contains('hidden');
   form.classList.toggle('hidden', !show);
   $(`[data-qa-open="${kind}"]`).setAttribute('aria-expanded', show);
-  if (show) form.querySelector('input').focus();
+  if (!show) return;
+  if (kind === 'todo') fillTodoEvents(form.elements.event.value, form.elements.event);
+  if (kind === 'routine') { state.qaDays = [1, 2, 3, 4, 5, 6, 7]; renderQaDays(); }
+  if (kind === 'chore') { form.elements.due.value ||= today(); state.qaWho = null; renderQaWho(); }
+  form.elements.title.focus();
 }
+function renderQaDays() {
+  $('[data-qa-days]').innerHTML = [...DOW].map((d, i) =>
+    `<button type="button" data-d="${i + 1}" aria-pressed="${state.qaDays.includes(i + 1)}">${d}</button>`).join('');
+}
+function renderQaWho() {
+  $('[data-qa-who]').innerHTML = [{ email: null, display_name: '누구나' }, ...state.members].map(p =>
+    `<button type="button" data-email="${p.email || ''}" aria-pressed="${(p.email || null) === state.qaWho}">${esc(p.display_name)}</button>`).join('');
+}
+document.addEventListener('click', e => {
+  const d = Number(e.target.closest('[data-qa-days] [data-d]')?.dataset.d);
+  if (d) {
+    const next = state.qaDays.includes(d) ? state.qaDays.filter(x => x !== d) : [...state.qaDays, d].sort();
+    if (next.length) state.qaDays = next; // 요일은 하나 이상
+    return renderQaDays();
+  }
+  const who = e.target.closest('[data-qa-who] button');
+  if (who) { state.qaWho = who.dataset.email || null; renderQaWho(); }
+});
 document.addEventListener('click', e => {
   const k = e.target.closest('[data-qa-open]')?.dataset.qaOpen;
   if (k) toggleQuickAdd(k);
 });
 document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.isComposing && e.target.name === 'title' && e.target.closest('.quick-add')) {
+    e.preventDefault();
+    return e.target.form.requestSubmit();
+  }
   if (e.key !== 'Escape') return;
   if (e.target.closest?.('.sub-qa')) { e.preventDefault(); toggleSubInput(state.subOpen); }
   const qa = e.target.closest?.('.quick-add[data-qa]:not(.sub-qa)');
