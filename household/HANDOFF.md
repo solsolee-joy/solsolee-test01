@@ -4,8 +4,9 @@
 
 ## 지금 상태
 
-- 화면: `household/index.html` 한 파일. GitHub Pages가 브랜치 `ccr-1624c47a-rm3p6v`에서 배포
-  - https://solsolee-joy.github.io/solsolee-test01/household/
+- 화면: `household/index.html` 한 파일. 브랜치 `ccr-1624c47a-rm3p6v`에 푸시하면 두 곳에 배포된다
+  - 주 주소: https://twoclocks.pages.dev (Cloudflare Pages, 빌드 출력 디렉터리 `household`)
+  - 옛 주소: https://solsolee-joy.github.io/solsolee-test01/household/ (GitHub Pages, 당분간 그대로 둔다)
 - 데이터: Supabase 프로젝트 `jryxpbtudqzjtchcauim` (two_clocks_home_seoul, 서울). 스키마는 `supabase/migrations/`에 순서대로 있고 전부 적용됨
 - 디자인: 크림·월넛·올리브·앰버 팔레트, 온글잎 박다현체 제목, 이서윤체 본문·숫자, 손그림 테두리, 동숲 아이콘. 자세한 결정은 README 진행 상황
 
@@ -20,8 +21,10 @@
 목표: 2027년 1월에 연표(남편)에게 보여 주고 같이 쓰기 시작한다. 하나씩 끝나면 [x]로 바꾸고 날짜를 적는다.
 
 꼭 할 것 (주소·서버는 이 순서로. 로그인 설정을 새 프로젝트에 한 번만 하려고)
-- [ ] 1. Cloudflare Pages 연결 (새별, 브라우저): 저장소 solsolee-joy/solsolee-test01, 프로덕션 브랜치 `ccr-1624c47a-rm3p6v`,
-  빌드 명령 없음, 빌드 출력 디렉터리 `household` (저장소 맨 위 index.html은 다른 페이지라서). 나온 `이름.pages.dev`를 받는다
+- [x] 1. Cloudflare Pages 연결 (2026-10-22) → https://twoclocks.pages.dev
+  저장소 solsolee-joy/solsolee-test01, 프로덕션 브랜치 `ccr-1624c47a-rm3p6v`, 빌드 명령 없음, 빌드 출력 디렉터리 `household`
+  (저장소 맨 위 index.html은 다른 페이지라서). 처음엔 Workers로 잘못 만들어 지우고 Pages로 다시 만들었다.
+  글꼴·아이콘·manifest·`?memo` 모두 200 확인
 - [x] 2. Supabase를 시드니에서 서울로 옮김 (2026-10-22). 새 프로젝트 two_clocks_home_seoul `jryxpbtudqzjtchcauim` (ap-northeast-2)
   - 무료 2개 제한 때문에 백업 → 시드니 삭제(새별) → 서울 생성 → 복원 순서로 했다
   - 백업: `C:\Users\happy\OneDrive\문서\Household-backup\2026-10-22-sydney\` (저장소 밖, 개인 자료라 커밋 금지).
@@ -33,9 +36,9 @@
     Auth 사용자는 옮기지 않았다 (새별은 메일 링크로 다시 들어와 비밀번호를 다시 정한다)
   - 참고: 이 계정에선 Supabase MCP 커넥터가 새 프로젝트에 권한이 없다. SQL은 CLI `db query --linked --project-ref`로 돌린다
     (여러 줄 SQL은 -f 파일로. 가끔 멈추면 timeout 걸고 다시)
-- [ ] 3. 새 프로젝트 Authentication → URL Configuration에 주소(Site URL, Redirect URLs).
-  지금은 GitHub Pages 주소, Cloudflare 주소가 생기면 추가. 문서·manifest의 주소도 바꾼다.
-  연표가 홈 화면 아이콘을 추가하기 전에 끝낸다
+- [ ] 3. 새 프로젝트 Authentication → URL Configuration (새별): Site URL `https://twoclocks.pages.dev`,
+  Redirect URLs에 `https://twoclocks.pages.dev`와 GitHub 옛 주소 둘 다. 이게 돼야 메일 링크 로그인이 된다.
+  manifest는 상대 경로라 고칠 것 없음. 연표에겐 새 주소로 홈 화면 아이콘을 추가하게 한다
 - [ ] 아직 실제로 못 써 본 기능을 새별 휴대폰으로 확인
   - [ ] 비밀번호 로그인: 메일 링크로 들어와 비밀번호 정하기 → 로그아웃 → 비밀번호로 다시 들어오기
   - [ ] 메모 남기기: 남기기, 숫자 표시, 지우기
