@@ -441,9 +441,11 @@ dialog::backdrop { background: var(--scrim); }
 .quick-add .btn { min-width: 0; padding: 10px 14px; }
 .quick-add.sub-qa { margin: 4px 0 10px 28px; }
 .quick-add.qa-detail { flex-direction: column; gap: 8px; margin-bottom: 12px; }
-.qa-opts { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+.qa-opts { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
 .qa-opts label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); flex: 1 1 130px; min-width: 0; }
-.qa-opts input, .qa-opts select { width: 100%; padding: 9px 12px; border: 0; border-radius: 10px; background: var(--fill); font-size: 14px; color: var(--text); }
+.qa-opts input, .qa-opts select { box-sizing: border-box; width: 100%; height: 42px; padding: 0 12px; border: 0; border-radius: 10px; background: var(--fill); font-size: 14px; line-height: normal; color: var(--text); }
+.qa-opts input { flex: none; } /* .quick-add input의 flex: 1이 세로 label 안에서 높이를 줄이지 않게 */
+.quick-add .qa-submit { align-self: stretch; min-width: 0; padding: 12px; }
 .qa-opts .weekdays { flex: 1; margin-top: 0; }
 .qa-opts .weekdays button { padding: 8px 0; }
 .qa-opts .qa-who { flex: 1 1 100%; margin: 0; }
@@ -982,14 +984,16 @@ body {
       </div>
       <div class="block">
         <div class="block-head"><h2>할 일</h2><span class="aside num" id="mine-todo-count"></span><button class="head-add" type="button" data-qa-open="todo" aria-expanded="false" aria-label="할 일 추가">+</button></div>
-        <form class="quick-add qa-detail hidden" data-qa="todo"><input name="title" autocomplete="off" required maxlength="200" enterkeyhint="done" placeholder="할 일 적고 엔터">
-          <div class="qa-opts"><label>기한<input type="date" name="due"></label><label>일정<select name="event"><option value="">없음</option></select></label></div></form>
+        <form class="quick-add qa-detail hidden" data-qa="todo"><input name="title" autocomplete="off" required maxlength="200" enterkeyhint="done" placeholder="할 일">
+          <div class="qa-opts"><label>기한<input type="date" name="due"></label><label>일정<select name="event"><option value="">없음</option></select></label></div>
+          <button class="btn primary qa-submit" type="submit">할 일 추가</button></form>
         <div id="mine-todos"></div>
       </div>
       <div class="block">
         <div class="block-head"><h2>내 루틴</h2><span class="rw-nav aside"><button type="button" data-rw="-1" aria-label="지난주">‹</button><span id="rw-label" class="num"></span><button type="button" data-rw="1" aria-label="다음 주">›</button></span><button class="head-add" type="button" data-qa-open="routine" aria-expanded="false" aria-label="루틴 추가">+</button></div>
-        <form class="quick-add qa-detail hidden" data-qa="routine"><input name="title" autocomplete="off" required maxlength="200" enterkeyhint="done" placeholder="루틴 적고 엔터">
-          <div class="qa-opts"><div class="weekdays" data-qa-days></div></div></form>
+        <form class="quick-add qa-detail hidden" data-qa="routine"><input name="title" autocomplete="off" required maxlength="200" enterkeyhint="done" placeholder="루틴">
+          <div class="qa-opts"><div class="weekdays" data-qa-days></div></div>
+          <button class="btn primary qa-submit" type="submit">루틴 추가</button></form>
         <div id="mine-routines"></div>
       </div>
       <div class="block">
@@ -1006,9 +1010,10 @@ body {
       </div>
       <div class="block">
         <div class="block-head"><h2>오늘까지</h2><span class="aside num" id="chores-due-count"></span><button class="head-add" type="button" data-qa-open="chore" aria-expanded="false" aria-label="집안일 추가">+</button></div>
-        <form class="quick-add qa-detail hidden" data-qa="chore"><input name="title" autocomplete="off" required maxlength="200" enterkeyhint="done" placeholder="집안일 적고 엔터">
+        <form class="quick-add qa-detail hidden" data-qa="chore"><input name="title" autocomplete="off" required maxlength="200" enterkeyhint="done" placeholder="집안일">
           <div class="qa-opts"><label>얼마나 자주<select name="repeat"><option value="">한 번만</option><option value="1">매일</option><option value="3">3일마다</option><option value="7">매주</option><option value="14">2주마다</option><option value="30">한 달마다</option></select></label>
-          <label>할 날<input type="date" name="due"></label><div class="seg qa-who" data-qa-who></div></div></form>
+          <label>할 날<input type="date" name="due"></label><div class="seg qa-who" data-qa-who></div></div>
+          <button class="btn primary qa-submit" type="submit">집안일 추가</button></form>
         <div id="chores-due"></div>
       </div>
       <div class="block">
