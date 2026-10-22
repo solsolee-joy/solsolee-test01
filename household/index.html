@@ -203,6 +203,7 @@ button.row:hover { background: var(--fill); }
 .row .body { flex: 1; min-width: 0; }
 .row .title { display: block; font-size: 16px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row .sub { display: block; font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .memo { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; font-size: 13px; color: var(--text); opacity: .8; white-space: pre-line; word-break: keep-all; overflow-wrap: anywhere; }
 .row .end { text-align: right; flex-shrink: 0; }
 .row .end .amt { font-size: 16px; font-weight: 600; }
 .row .end .amt.move { color: var(--muted); font-weight: 500; }
@@ -2303,7 +2304,7 @@ function eventRow(ev, showDate = false) {
   return `<button class="row" type="button" data-event="${esc(ev.id)}">
     ${whoMark(p)}
     <span class="time num">${time}</span>
-    <span class="body"><span class="title">${esc(ev.title)}${ev.private ? ` <span class="tag lock-tag">${LOCK_SVG} 나만</span>` : ''}${todoCountTag(ev.id)}${!ev.private && privateNote('event', ev.id) ? ` <span class="tag lock-tag"><svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>` : ''}</span><span class="sub">${esc(sub)}</span></span>
+    <span class="body"><span class="title">${esc(ev.title)}${ev.private ? ` <span class="tag lock-tag">${LOCK_SVG} 나만</span>` : ''}${todoCountTag(ev.id)}${!ev.private && privateNote('event', ev.id) ? ` <span class="tag lock-tag"><svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>` : ''}</span><span class="sub">${esc(sub)}</span>${ev.memo ? `<span class="memo">${esc(ev.memo)}</span>` : ''}</span>
   </button>`;
 }
 
