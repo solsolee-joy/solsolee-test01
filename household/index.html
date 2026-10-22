@@ -419,6 +419,26 @@ dialog::backdrop { background: var(--scrim); }
 .form .hint.full { grid-column: 1 / -1; }
 .ev-filter { display: inline-flex; gap: 4px; }
 .cal .chips em.private { background: none; box-shadow: inset 0 0 0 1px var(--c); }
+/* 이번 주 */
+.week-seg button { font-size: 13px; white-space: nowrap; }
+.wk-day { display: flex; gap: 12px; padding: 10px 0; align-items: flex-start; }
+.wk-day + .wk-day { border-top: 1px solid var(--line); }
+.wk-day.past { opacity: .5; }
+.wk-date { border: 0; background: none; padding: 2px 0; width: 44px; flex-shrink: 0; text-align: left; font-weight: 600; font-size: 14px; color: var(--text-2); }
+.wk-date small { display: block; font-size: 12px; font-weight: 500; color: var(--muted); }
+.wk-date.sat small { color: var(--plus); } .wk-date.sun small { color: var(--minus); }
+.wk-day.today .wk-date { color: var(--accent); }
+.wk-day.today .wk-date small { color: var(--accent); }
+.wk-items { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.wk-item { display: flex; align-items: center; gap: 8px; border: 0; background: none; padding: 2px 0; text-align: left; font-size: 14px; color: var(--text); min-width: 0; }
+.wk-item i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex-shrink: 0; }
+.wk-item i.sq { border-radius: 2px; background: var(--muted); }
+.wk-item i.sq.mine { background: var(--amber); }
+.wk-item .num { font-size: 12px; color: var(--muted); min-width: 34px; }
+.wk-item b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wk-item em { font-style: normal; font-size: 12px; color: var(--muted); margin-left: auto; padding-left: 6px; white-space: nowrap; }
+.wk-empty { font-size: 13px; color: var(--muted); padding: 2px 0; }
+.wk-note { font-size: 12px; color: var(--plus); }
 .due { font-size: 13px; font-weight: 600; color: var(--muted); }
 .due.late { color: var(--minus); }
 .due.today { color: var(--accent); }
@@ -896,8 +916,9 @@ body {
         <div id="day-events"></div>
       </div>
       <div class="block a-sat">
-        <div class="block-head"><h2>이번 달 토요일</h2><span class="aside">연표 쉬는 날</span></div>
-        <div class="rows" id="saturdays"></div>
+        <div class="block-head"><h2 id="week-title">이번 주</h2><span class="aside num" id="week-range"></span></div>
+        <div class="seg week-seg" id="week-seg"></div>
+        <div id="week-list"></div>
       </div>
       </div>
     </section>
@@ -1358,6 +1379,7 @@ const state = {
   showMoney: (() => { try { return localStorage.getItem('showMoney') !== '0'; } catch { return true; } })(),
   // 달력 거르기: all 전체, shared 함께 보는 일정만, mine 나만 보는 일정만
   eventFilter: (() => { try { return localStorage.getItem('eventFilter') || 'all'; } catch { return 'all'; } })(),
+  weekTab: (() => { try { return localStorage.getItem('weekTab') || 'all'; } catch { return 'all'; } })(),
   routineDone: new Set(),
   planExtra: 100000,
   editingRec: null,
@@ -1591,6 +1613,7 @@ async function loadMonth() {
   for (const r of [tx, budgets, summary, debts, events, monthly]) if (r.error) return fail(r.error);
   state.monthly = monthly.data;
   state.events = events.data.sort(eventOrder);
+  state.weekFresh = false; // 일정이 바뀌었을 수 있으니 이번 주도 다시 읽는다
   state.tx = tx.data.sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
   state.budgets = budgets.data;
   state.summary = summary.data;
@@ -2320,21 +2343,80 @@ function renderSchedule() {
     (list.length ? `<div class="rows">${list.map(ev => eventRow(ev)).join('')}</div>` : '<div class="empty">약속이 없어요</div>') +
     (money.length ? `<div class="rows">${money.map(mi => moneyRow(mi)).join('')}</div>` : '');
 
-  const sats = [];
-  for (let d = 1; d <= days; d++) {
-    const iso = `${state.month}-${pad(d)}`;
-    if (isSat(iso)) sats.push(iso);
-  }
-  $('#saturdays').innerHTML = sats.map(iso => {
-    const evs = byDay[iso] || [];
-    const past = iso < today();
-    return `<button class="row" type="button" data-day-jump="${iso}" ${past ? 'style="opacity:.5"' : ''}>
-      <span class="time num">${mmdd(iso)}</span>
-      <span class="body"><span class="title">${evs.length ? esc(evs.map(e => e.title).join(', ')) : '비어 있음'}</span>
-        <span class="sub">${evs.length ? esc([...new Set(evs.map(e => person(e.owner).display_name))].join(', ')) : '둘이 같이 쉬는 날'}</span></span>
-    </button>`;
+  showWeek();
+}
+
+// 이번 주: 달력에서 고른 날이 있는 주(월~일). 달이 걸쳐도 되게 그 주 일정을 따로 읽는다
+// 탭: all 전체(일정+집안일+내 할 일), together 같이(함께 일정+집안일), other 상대 일정, me 내 일정·할 일
+const otherMember = () => state.members.find(m => m.email !== state.me?.email);
+function showWeek() {
+  const mon = mondayOf(state.selectedDay || today());
+  renderWeek();
+  if (state.weekStart === mon && state.weekFresh) return;
+  state.weekFresh = true;
+  sb.from('events').select('*').gte('date', mon).lte('date', addDays(mon, 6)).then(({ data, error }) => {
+    if (error) return fail(error);
+    state.weekStart = mon;
+    state.weekEvents = data.sort(eventOrder);
+    renderWeek();
+  });
+}
+function renderWeek() {
+  const mon = mondayOf(state.selectedDay || today());
+  const days = [...Array(7)].map((_, i) => addDays(mon, i));
+  const other = otherMember();
+  const me = state.me?.email;
+  const tab = state.weekTab;
+  const tabs = [['all', '전체'], ['together', '같이'], ['other', other ? `${other.display_name} 일정` : '상대 일정'], ['me', '내 일정']];
+  $('#week-seg').innerHTML = tabs.map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${tab === v}">${esc(l)}</button>`).join('');
+  $('#week-title').textContent = days.includes(today()) ? '이번 주' : '그 주';
+  $('#week-range').textContent = `${mmdd(days[0])} ~ ${mmdd(days[6])}`;
+  const events = state.weekStart === mon ? state.weekEvents || [] : [];
+  const pick = ev => tab === 'all' || (tab === 'together' && !ev.owner && !ev.private)
+    || (tab === 'other' && other && ev.owner === other.email) || (tab === 'me' && (ev.owner === me || ev.private));
+  const t = today();
+  $('#week-list').innerHTML = days.map((d, i) => {
+    const items = [];
+    for (const ev of events.filter(ev => ev.date === d && pick(ev))) {
+      const p = person(ev.owner);
+      items.push(`<button class="wk-item" type="button" data-event="${esc(ev.id)}"><i style="--c:${p.color}"></i>
+        <span class="num">${ev.start_time ? hhmm(ev.start_time) : '종일'}</span><b>${esc(ev.title)}</b>${ev.private ? `<span class="tag lock-tag">${LOCK_SVG}</span>` : ''}
+        <em>${esc(p.display_name)}</em></button>`);
+    }
+    // 집안일은 다음에 할 날 기준. 밀린 건 오늘 줄에 같이 보인다
+    if (tab === 'all' || tab === 'together') {
+      for (const c of (state.chores || []).filter(c => c.due_on === d || (d === t && c.due_on < t))) {
+        items.push(`<button class="wk-item" type="button" data-week-chore="${c.id}"><i class="sq"></i>
+          <span class="num">집안일</span><b>${esc(c.title)}</b><em>${esc(nameOf(c.assignee))}</em></button>`);
+      }
+    }
+    if (tab === 'all' || tab === 'me') {
+      for (const x of (state.todos || []).filter(x => !x.done_on && (x.due_on === d || (d === t && x.due_on && x.due_on < t)))) {
+        items.push(`<button class="wk-item" type="button" data-week-todo="${x.id}"><i class="sq mine"></i>
+          <span class="num">할 일</span><b>${esc(x.title)}</b><em>나만</em></button>`);
+      }
+    }
+    const sat = i === 5;
+    return `<div class="wk-day ${d === t ? 'today' : ''} ${d < t ? 'past' : ''}">
+      <button class="wk-date num ${sat ? 'sat' : i === 6 ? 'sun' : ''}" type="button" data-day="${d}">${mmdd(d)}<small>${'월화수목금토일'[i]}</small></button>
+      <div class="wk-items">${items.join('') || '<span class="wk-empty">비어 있음</span>'}${sat ? '<span class="wk-note">연표 쉬는 날</span>' : ''}</div>
+    </div>`;
   }).join('');
 }
+$('#week-seg').addEventListener('click', e => {
+  if (!e.target.dataset.v) return;
+  state.weekTab = e.target.dataset.v;
+  try { localStorage.setItem('weekTab', state.weekTab); } catch { /* 저장 못 해도 이번 화면에선 동작 */ }
+  renderWeek();
+});
+$('#week-list').addEventListener('click', e => {
+  const day = e.target.closest('.wk-date')?.dataset.day;
+  if (day) { state.selectedDay = day; renderSchedule(); $('#day-title').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+  const c = e.target.closest('[data-week-chore]')?.dataset.weekChore;
+  if (c) return openChore(state.chores.find(x => x.id === c));
+  const x = e.target.closest('[data-week-todo]')?.dataset.weekTodo;
+  if (x) return openTodo(state.todos.find(t => t.id === x), 'todo');
+});
 
 $('#legend').addEventListener('click', e => {
   const f = e.target.closest('[data-evf]')?.dataset.evf;
@@ -2353,13 +2435,6 @@ $('#cal').addEventListener('click', e => {
   if (!day) return;
   state.selectedDay = day;
   renderSchedule();
-});
-$('#saturdays').addEventListener('click', e => {
-  const day = e.target.closest('[data-day-jump]')?.dataset.dayJump;
-  if (!day) return;
-  state.selectedDay = day;
-  renderSchedule();
-  $('#day-title').scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
 
 function renderOwnerSeg(sel, value, withTogether) {
@@ -2448,7 +2523,7 @@ $('#event-delete').addEventListener('click', async () => {
 });
 document.addEventListener('click', e => {
   const id = e.target.closest('[data-event]')?.dataset.event;
-  if (id) openEvent(state.events.find(ev => ev.id === id) || state.upcoming?.find(ev => ev.id === id));
+  if (id) openEvent(state.events.find(ev => ev.id === id) || state.upcoming?.find(ev => ev.id === id) || state.weekEvents?.find(ev => ev.id === id));
 });
 
 // 집안일 -------------------------------------------------------------
@@ -2476,6 +2551,7 @@ async function loadChores() {
   state.upcoming = upcoming.data.sort(eventOrder);
   renderChores();
   renderToday();
+  renderWeek();
 }
 
 function choreRow(c) {
@@ -2563,6 +2639,7 @@ async function loadMine() {
   state.routineDone = new Set(logs.data.map(l => doneKey(l.routine_id, l.done_on)));
   renderMine();
   renderToday();
+  renderWeek();
 }
 
 // 연속 기록: 하는 요일만 센다. 오늘 아직 안 했으면 어제부터 거슬러 센다
