@@ -19,10 +19,16 @@
 
 목표: 2027년 1월에 연표(남편)에게 보여 주고 같이 쓰기 시작한다. 하나씩 끝나면 [x]로 바꾸고 날짜를 적는다.
 
-꼭 할 것
-- [ ] 주소를 Cloudflare Pages(`이름.pages.dev`)로 옮기기. 새별이 Cloudflare에서 이 저장소를 연결하면,
-  첫 화면이 household로 가게 하고 Supabase Auth Site URL·Redirect URL과 문서의 주소를 새 주소로 바꾼다.
-  연표가 홈 화면 아이콘을 추가하기 전에 한다
+꼭 할 것 (주소·서버는 이 순서로. 로그인 설정을 새 프로젝트에 한 번만 하려고)
+- [ ] 1. Cloudflare Pages 연결 (새별, 브라우저): 저장소 solsolee-joy/solsolee-test01, 프로덕션 브랜치 `ccr-1624c47a-rm3p6v`,
+  빌드 명령 없음, 빌드 출력 디렉터리 `household` (저장소 맨 위 index.html은 다른 페이지라서). 나온 `이름.pages.dev`를 받는다
+- [ ] 2. Supabase를 시드니(ap-southeast-2)에서 서울(ap-northeast-2)로 옮기기
+  - 새별이 서울 지역 새 프로젝트를 만든다. 무료 프로젝트 수 제한에 걸리면 옮긴 뒤 시드니 프로젝트를 지우거나 멈춘다
+  - Claude: `supabase/migrations/` 순서대로 적용 → public 표 데이터 복사 → Storage `docs` 버킷 파일 복사 →
+    index.html의 SUPABASE_URL·키, scripts/upload-doc-file.mjs의 REF, 문서의 프로젝트 id를 바꾼다
+  - 옮기는 동안은 사이트에 입력하지 않는다. 새별은 메일 링크로 다시 들어와 비밀번호를 다시 정한다 (Auth 사용자는 옮기지 않는다)
+- [ ] 3. 새 프로젝트 Authentication → URL Configuration에 새 주소(Site URL, Redirect URLs). 문서·manifest의 주소도 바꾼다.
+  연표가 홈 화면 아이콘을 추가하기 전에 끝낸다
 - [ ] 아직 실제로 못 써 본 기능을 새별 휴대폰으로 확인
   - [ ] 비밀번호 로그인: 메일 링크로 들어와 비밀번호 정하기 → 로그아웃 → 비밀번호로 다시 들어오기
   - [ ] 메모 남기기: 남기기, 숫자 표시, 지우기
