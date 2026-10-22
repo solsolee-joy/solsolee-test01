@@ -6,7 +6,7 @@
 
 - 화면: `household/index.html` 한 파일. GitHub Pages가 브랜치 `ccr-1624c47a-rm3p6v`에서 배포
   - https://solsolee-joy.github.io/solsolee-test01/household/
-- 데이터: Supabase 프로젝트 `twrcgrflwvwljdyhxuwr`. 스키마는 `supabase/migrations/`에 순서대로 있고 전부 적용됨
+- 데이터: Supabase 프로젝트 `jryxpbtudqzjtchcauim` (two_clocks_home_seoul, 서울). 스키마는 `supabase/migrations/`에 순서대로 있고 전부 적용됨
 - 디자인: 크림·월넛·올리브·앰버 팔레트, 온글잎 박다현체 제목, 이서윤체 본문·숫자, 손그림 테두리, 동숲 아이콘. 자세한 결정은 README 진행 상황
 
 ## 확인된 것
@@ -22,20 +22,19 @@
 꼭 할 것 (주소·서버는 이 순서로. 로그인 설정을 새 프로젝트에 한 번만 하려고)
 - [ ] 1. Cloudflare Pages 연결 (새별, 브라우저): 저장소 solsolee-joy/solsolee-test01, 프로덕션 브랜치 `ccr-1624c47a-rm3p6v`,
   빌드 명령 없음, 빌드 출력 디렉터리 `household` (저장소 맨 위 index.html은 다른 페이지라서). 나온 `이름.pages.dev`를 받는다
-- [ ] 2. Supabase를 시드니(ap-southeast-2)에서 서울(ap-northeast-2)로 옮기기
-  - 무료 프로젝트 2개 제한(새별 계정)에 걸려서 새 프로젝트를 먼저 못 만든다. 방법: 백업 → 시드니 삭제 → 서울 생성 → 복원 (2026-10-22 결정)
-  - [x] 백업 2026-10-22: `node household/scripts/backup.mjs twrcgrflwvwljdyhxuwr <폴더>`로
-    `C:\Users\happy\OneDrive\문서\Household-backup\2026-10-22-sydney\`에 받음 (저장소 밖, 개인 자료라 커밋 금지).
-    표 17개(거래 254건, 합계 21,604,244원), 자료 파일 3개 5,051,172바이트. 원본 개수·크기와 일치 확인.
-    라이브 스키마(열·뷰·정책·함수·버킷·realtime)가 `supabase/migrations/`와 일치하는 것도 확인
-  - 삭제 직전에 백업을 한 번 더 받는다 (그사이 입력한 것). 삭제는 새별이 대시보드에서 한다
-  - 복원 순서: migrations 차례로 적용 → 시드가 들어가는 표(envelopes 등)를 비우고 → `scripts/backup.mjs`의 TABLES 순서대로 넣기
-    (identity 열은 `overriding system value`) → Storage `docs/{doc_id}/...` 그대로 올리기 → 개수·합계 다시 맞춰 보기
-  - Auth 사용자는 옮기지 않는다. `members`는 이메일 기준이라 다시 로그인하면 그대로 이어진다
-  - Claude: `supabase/migrations/` 순서대로 적용 → public 표 데이터 복사 → Storage `docs` 버킷 파일 복사 →
-    index.html의 SUPABASE_URL·키, scripts/upload-doc-file.mjs의 REF, 문서의 프로젝트 id를 바꾼다
-  - 옮기는 동안은 사이트에 입력하지 않는다. 새별은 메일 링크로 다시 들어와 비밀번호를 다시 정한다 (Auth 사용자는 옮기지 않는다)
-- [ ] 3. 새 프로젝트 Authentication → URL Configuration에 새 주소(Site URL, Redirect URLs). 문서·manifest의 주소도 바꾼다.
+- [x] 2. Supabase를 시드니에서 서울로 옮김 (2026-10-22). 새 프로젝트 two_clocks_home_seoul `jryxpbtudqzjtchcauim` (ap-northeast-2)
+  - 무료 2개 제한 때문에 백업 → 시드니 삭제(새별) → 서울 생성 → 복원 순서로 했다
+  - 백업: `C:\Users\happy\OneDrive\문서\Household-backup\2026-10-22-sydney\` (저장소 밖, 개인 자료라 커밋 금지).
+    `node household/scripts/backup.mjs <ref> <폴더>`. 삭제 직전 재백업은 못 했다 (새별이 먼저 삭제함)
+  - 복원: migrations를 `npx supabase db query --linked --project-ref <ref> -f <파일>`로 차례로 적용 →
+    `scripts/restore-sql.mjs`로 만든 SQL(시드 비우고 json_populate_recordset, identity 번호 맞춤) → `scripts/restore-storage.mjs`로 파일
+  - 확인: 표 17개 개수, 거래 합계 21,604,244원, 파일 3개 크기, realtime 14개, 정책 24개 모두 백업과 같음. 로그인 없이는 아무것도 안 읽힘
+  - index.html의 SUPABASE_URL·키, scripts의 REF, 문서를 새 프로젝트로 바꿈.
+    Auth 사용자는 옮기지 않았다 (새별은 메일 링크로 다시 들어와 비밀번호를 다시 정한다)
+  - 참고: 이 계정에선 Supabase MCP 커넥터가 새 프로젝트에 권한이 없다. SQL은 CLI `db query --linked --project-ref`로 돌린다
+    (여러 줄 SQL은 -f 파일로. 가끔 멈추면 timeout 걸고 다시)
+- [ ] 3. 새 프로젝트 Authentication → URL Configuration에 주소(Site URL, Redirect URLs).
+  지금은 GitHub Pages 주소, Cloudflare 주소가 생기면 추가. 문서·manifest의 주소도 바꾼다.
   연표가 홈 화면 아이콘을 추가하기 전에 끝낸다
 - [ ] 아직 실제로 못 써 본 기능을 새별 휴대폰으로 확인
   - [ ] 비밀번호 로그인: 메일 링크로 들어와 비밀번호 정하기 → 로그아웃 → 비밀번호로 다시 들어오기

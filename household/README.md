@@ -2,7 +2,7 @@
 
 두 사람이 같이 쓰는 생활 허브. 첫 화면은 가계부이고, 집안일 등은 나중에 붙인다.
 
-- 데이터와 로그인: Supabase 프로젝트 `twrcgrflwvwljdyhxuwr` (개인용 조직, 회사 위키 조직과 분리)
+- 데이터와 로그인: Supabase 프로젝트 `jryxpbtudqzjtchcauim` (two_clocks_home_seoul, 서울. 2026-10-22 시드니 `twrcgrflwvwljdyhxuwr`에서 옮김) (개인용 조직, 회사 위키 조직과 분리)
 - 화면: 정적 페이지. 호스팅 위치는 미정 (GitHub Pages 또는 Cloudflare Pages)
 - 접근: `members` 테이블에 등록된 이메일만 RLS로 읽고 쓴다. publishable key는 공개돼도 된다
 - 거래 기록은 이 저장소에 두지 않는다. 데이터는 Supabase에만 있다

@@ -6,7 +6,7 @@ import { readFileSync, statSync } from 'node:fs';
 import { basename, extname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 
-const REF = 'twrcgrflwvwljdyhxuwr';
+const REF = 'jryxpbtudqzjtchcauim';
 const URL = `https://${REF}.supabase.co`;
 const MIME = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp', '.gif': 'image/gif', '.heic': 'image/heic', '.pdf': 'application/pdf' };
 
