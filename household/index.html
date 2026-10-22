@@ -396,7 +396,12 @@ dialog::backdrop { background: var(--scrim); }
 .legend > span { white-space: nowrap; }
 .legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 5px; vertical-align: 1px; }
 .time { font-size: 13px; font-weight: 600; color: var(--text-2); width: 44px; flex-shrink: 0; text-align: center; }
-.who-bar { width: 4px; align-self: stretch; border-radius: 4px; background: var(--c); flex-shrink: 0; }
+/* 일정 주인 표시: 고른 주민 얼굴, 없으면 이름 첫 글자, 함께는 집 */
+.who-mark { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--c) 16%, var(--surface)); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--c) 55%, transparent);
+  color: var(--c); font-size: 14px; font-weight: 700; }
+.who-mark img { width: 28px; height: 28px; object-fit: contain; }
+.who-mark .ico { width: 22px; height: 22px; }
 .sat-note { font-size: 13px; color: var(--accent); background: var(--accent-soft); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
 
 /* 집안일 */
@@ -1386,6 +1391,8 @@ const state = {
 };
 
 const TOGETHER = { email: null, display_name: '함께', color: '#5f7a45' };
+const whoMark = p => `<span class="who-mark" style="--c:${p.color}" title="${esc(p.display_name)}">${
+  p.avatar ? `<img src="img/villagers/${p.avatar}.webp" alt="">` : p === TOGETHER ? icon('house') : esc(p.display_name.slice(0, 1))}</span>`;
 const PERSON_COLORS = ['#c46a3c', '#4f78a6'];
 const VILLAGERS = [["v001","1호"],["v002","TK"],["v003","건태"],["v004","고숙이"],["v005","고순이"],["v006","고옥이"],["v007","귀오미"],["v008","글루민"],["v009","꽃지"],["v010","나탈리"],["v011","너굴"],["v012","넬슨"],["v013","눈사람"],["v014","늘봉"],["v015","다람"],["v016","대장"],["v017","래미"],["v018","럭키"],["v019","레베카"],["v020","레이니"],["v021","로드리"],["v022","루나"],["v023","리사"],["v024","리카"],["v025","리카르도"],["v026","리키"],["v027","리포"],["v028","릴리"],["v029","릴리안"],["v030","마르"],["v031","마리"],["v032","마스터"],["v033","마티"],["v034","메이"],["v035","메이첼"],["v036","멜버른"],["v037","모니카"],["v038","모리"],["v039","무파니"],["v040","문대"],["v041","문리나"],["v042","미애"],["v043","미첼"],["v044","민트"],["v045","바네사"],["v046","바닐라"],["v047","밤돌"],["v048","베이글"],["v049","벤"],["v050","병태"],["v051","봉추"],["v052","부엉"],["v053","부옥"],["v054","부케"],["v055","브로콜리"],["v056","블랜더"],["v057","비앙카"],["v058","빅토리아"],["v059","빙수"],["v060","빙티"],["v061","뽀야미"],["v062","뿌람"],["v063","사라"],["v064","사이다"],["v065","산드라"],["v066","산토스"],["v067","샐리"],["v068","서머"],["v069","솔미"],["v070","쇼콜라"],["v071","스트로베리"],["v072","스피카"],["v073","시베리아"],["v074","시온"],["v075","신옥"],["v076","실바나"],["v077","아델레이드"],["v078","아마민"],["v079","아세로라"],["v080","아폴로"],["v081","애플ㄹ"],["v082","앤"],["v083","에뜨와르"],["v084","엘레핀"],["v085","여욱"],["v086","여울"],["v087","염두리"],["v088","예링"],["v089","오로라"],["v090","올리브"],["v091","요비"],["v092","이요"],["v093","재스민"],["v094","잭슨"],["v095","쟝"],["v096","제시카"],["v097","젤리"],["v098","존"],["v099","주디"],["v100","줄리아"],["v101","쭈니"],["v102","차둘"],["v103","찰스"],["v104","참돌이"],["v105","첼시"],["v106","초코"],["v107","카라멜"],["v108","케첩"],["v109","켄"],["v110","코코아"],["v111","콩돌"],["v112","크리미"],["v113","크리스틴"],["v114","타마"],["v115","탁호"],["v116","탱크"],["v117","토미"],["v118","티나"],["v119","파이프"],["v120","파타야"],["v121","파틱"],["v122","패치"],["v123","패트릭"],["v124","페튜니아"],["v125","펭구"],["v126","펭수"],["v127","프랑소와"],["v128","플라라"],["v129","피카"],["v130","피터"],["v131","핀틱"],["v132","핑글이"],["v133","핑키"],["v134","한나"],["v135","헨리"],["v136","호떡"],["v137","휘니"],["v138","휴지"]];
 const villName = id => (VILLAGERS.find(v => v[0] === id) || [])[1] || '';
@@ -2270,7 +2277,7 @@ function eventRow(ev, showDate = false) {
   const sub = [showDate ? `${mmdd(ev.date)} ${weekday(ev.date)}` : null, p.display_name,
     ev.end_time ? `~${hhmm(ev.end_time)}` : null, ev.place].filter(Boolean).join(' · ');
   return `<button class="row" type="button" data-event="${esc(ev.id)}">
-    <span class="who-bar" style="--c:${p.color}"></span>
+    ${whoMark(p)}
     <span class="time num">${time}</span>
     <span class="body"><span class="title">${esc(ev.title)}${ev.private ? ` <span class="tag lock-tag">${LOCK_SVG} 나만</span>` : ''}${!ev.private && privateNote('event', ev.id) ? ` <span class="tag lock-tag"><svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>` : ''}</span><span class="sub">${esc(sub)}</span></span>
   </button>`;
