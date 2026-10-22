@@ -23,7 +23,15 @@
 - [ ] 1. Cloudflare Pages 연결 (새별, 브라우저): 저장소 solsolee-joy/solsolee-test01, 프로덕션 브랜치 `ccr-1624c47a-rm3p6v`,
   빌드 명령 없음, 빌드 출력 디렉터리 `household` (저장소 맨 위 index.html은 다른 페이지라서). 나온 `이름.pages.dev`를 받는다
 - [ ] 2. Supabase를 시드니(ap-southeast-2)에서 서울(ap-northeast-2)로 옮기기
-  - 새별이 서울 지역 새 프로젝트를 만든다. 무료 프로젝트 수 제한에 걸리면 옮긴 뒤 시드니 프로젝트를 지우거나 멈춘다
+  - 무료 프로젝트 2개 제한(새별 계정)에 걸려서 새 프로젝트를 먼저 못 만든다. 방법: 백업 → 시드니 삭제 → 서울 생성 → 복원 (2026-10-22 결정)
+  - [x] 백업 2026-10-22: `node household/scripts/backup.mjs twrcgrflwvwljdyhxuwr <폴더>`로
+    `C:\Users\happy\OneDrive\문서\Household-backup\2026-10-22-sydney\`에 받음 (저장소 밖, 개인 자료라 커밋 금지).
+    표 17개(거래 254건, 합계 21,604,244원), 자료 파일 3개 5,051,172바이트. 원본 개수·크기와 일치 확인.
+    라이브 스키마(열·뷰·정책·함수·버킷·realtime)가 `supabase/migrations/`와 일치하는 것도 확인
+  - 삭제 직전에 백업을 한 번 더 받는다 (그사이 입력한 것). 삭제는 새별이 대시보드에서 한다
+  - 복원 순서: migrations 차례로 적용 → 시드가 들어가는 표(envelopes 등)를 비우고 → `scripts/backup.mjs`의 TABLES 순서대로 넣기
+    (identity 열은 `overriding system value`) → Storage `docs/{doc_id}/...` 그대로 올리기 → 개수·합계 다시 맞춰 보기
+  - Auth 사용자는 옮기지 않는다. `members`는 이메일 기준이라 다시 로그인하면 그대로 이어진다
   - Claude: `supabase/migrations/` 순서대로 적용 → public 표 데이터 복사 → Storage `docs` 버킷 파일 복사 →
     index.html의 SUPABASE_URL·키, scripts/upload-doc-file.mjs의 REF, 문서의 프로젝트 id를 바꾼다
   - 옮기는 동안은 사이트에 입력하지 않는다. 새별은 메일 링크로 다시 들어와 비밀번호를 다시 정한다 (Auth 사용자는 옮기지 않는다)
