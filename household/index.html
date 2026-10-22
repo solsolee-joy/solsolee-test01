@@ -438,6 +438,9 @@ dialog::backdrop { background: var(--scrim); }
 .quick-add select { flex: 0 0 auto; padding-right: 8px; color: var(--text-2); }
 .quick-add input:focus, .quick-add select:focus { outline: 2px solid var(--accent); }
 .quick-add .btn { min-width: 0; padding: 10px 14px; }
+.quick-add.sub-qa { margin: 4px 0 10px 28px; }
+.add-sub { width: 28px; height: 28px; flex-shrink: 0; border: 0; border-radius: 50%; background: var(--fill); color: var(--muted); font-size: 18px; line-height: 28px; padding: 0; }
+.add-sub[aria-expanded="true"] { background: var(--accent); color: var(--on-accent); }
 .mine-note { text-align: center; font-size: 13px; color: var(--muted); margin: 4px 0 24px; }
 .weekdays { display: flex; gap: 6px; margin-top: 6px; }
 .weekdays button { flex: 1; border: 0; padding: 10px 0; border-radius: 10px; background: var(--fill); color: var(--muted); font-weight: 600; }
@@ -2696,7 +2699,15 @@ function todoRow(t, isChild = false) {
       ${ev ? `<span class="tag ev-tag" data-event="${esc(ev.id)}">${mmdd(ev.date)} ${esc(ev.title)}</span>` : ''}
     </button>
     <span class="due num ${late ? 'late' : t.due_on === today() ? 'today' : ''}">${due}</span>
-  </div>` + kids.sort((a, b) => !!a.done_on - !!b.done_on || a.created_at.localeCompare(b.created_at)).map(k => todoRow(k, true)).join('');
+    ${!isChild && !done ? `<button class="add-sub" type="button" data-add-sub="${t.id}" aria-expanded="${state.subOpen === t.id}" aria-label="${esc(t.title)}에 하위 할 일 추가">+</button>` : ''}
+  </div>` + kids.sort((a, b) => !!a.done_on - !!b.done_on || a.created_at.localeCompare(b.created_at)).map(k => todoRow(k, true)).join('')
+    + (state.subOpen === t.id ? `<form class="quick-add sub-qa" data-qa="sub" data-parent="${t.id}"><input autocomplete="off" required maxlength="200" placeholder="하위 할 일 적고 엔터"><button class="btn" type="submit">추가</button></form>` : '');
+}
+// 하위 입력 칸을 열고 닫는다. 다시 그린 뒤에도 커서가 칸에 남게 한다
+function toggleSubInput(id) {
+  state.subOpen = state.subOpen === id ? null : id;
+  renderMine();
+  $('[data-qa=sub] input')?.focus();
 }
 
 function renderMine() {
@@ -2718,6 +2729,9 @@ function renderMine() {
 
 $('#view-mine').addEventListener('click', async e => {
   if (e.target.closest('.ev-tag')) return; // 일정 열기는 아래 공통 처리
+  const addSub = e.target.closest('[data-add-sub]')?.dataset.addSub;
+  if (addSub) return toggleSubInput(addSub);
+  if (e.target.closest('.sub-qa')) return;
   const rt = e.target.closest('[data-rt]');
   const td = e.target.closest('[data-td]');
   if (rt) {
@@ -2842,14 +2856,20 @@ document.addEventListener('submit', async e => {
   const kind = form.dataset.qa;
   const btn = form.querySelector('button');
   btn.disabled = true;
-  const { error } = kind === 'todo' ? await sb.from('todos').insert({ title })
+  const { error } = kind === 'sub' ? await sb.from('todos').insert({ title, parent_id: form.dataset.parent })
+    : kind === 'todo' ? await sb.from('todos').insert({ title })
     : kind === 'routine' ? await sb.from('routines').insert({ title })
     : await sb.from('chores').insert({ title, due_on: today(), repeat_days: Number(form.querySelector('select').value) || null });
   btn.disabled = false;
   if (error) return fail(error);
   input.value = '';
   input.focus();
-  kind === 'chore' ? loadChores() : loadMine();
+  if (kind === 'chore') return loadChores();
+  await loadMine();
+  if (kind === 'sub') $('[data-qa=sub] input')?.focus(); // 다시 그려져도 이어 쓰게
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && e.target.closest?.('.sub-qa')) { e.preventDefault(); toggleSubInput(state.subOpen); }
 });
 $('#t-days').addEventListener('click', e => {
   const d = Number(e.target.dataset.d);
