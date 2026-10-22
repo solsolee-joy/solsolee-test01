@@ -7,7 +7,7 @@ import { join } from 'node:path';
 
 // backup.mjs의 TABLES와 같은 순서 (외래 키 순서)
 const TABLES = ['members', 'envelopes', 'debts', 'settings', 'rules', 'budgets', 'transactions', 'recurring',
-  'notes', 'notices', 'events', 'chores', 'chore_logs', 'private_notes', 'docs', 'doc_files', 'inbox',
+  'notices', 'events', 'chores', 'chore_logs', 'private_notes', 'docs', 'doc_files', 'inbox',
   'todos', 'routines', 'routine_logs'];
 const dir = process.argv[2];
 if (!dir) { console.error('사용: node restore-sql.mjs <백업 폴더>'); process.exit(1); }

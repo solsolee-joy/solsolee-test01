@@ -518,7 +518,7 @@ dialog::backdrop { background: var(--scrim); }
   }
   #view-chores .block { margin: 0; }
 
-  #view-tx, #view-budget, #view-debt, #view-notes { max-width: 820px; }
+  #view-tx, #view-budget, #view-debt { max-width: 820px; }
   .filters { flex-wrap: wrap; overflow: visible; }
 }
 @media (min-width: 960px) and (max-width: 1180px) {
@@ -545,7 +545,6 @@ dialog::backdrop { background: var(--scrim); }
 .notice .text { font-size: 15px; color: var(--text-2); white-space: pre-wrap; margin-top: 4px; }
 .notice .edit, .note .edit { border: 0; background: none; color: var(--accent); font-size: 13px; font-weight: 600; padding: 0; }
 .pin { font-size: 11px; font-weight: 700; color: var(--warn); background: var(--warn-soft); padding: 1px 6px; border-radius: 6px; }
-.privacy-banner { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--accent); background: var(--accent-soft); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; }
 .note .item { display: flex; gap: 8px; }
 .note .item span { flex: 1; }
 
@@ -895,11 +894,6 @@ body {
       </div>
     </section>
 
-    <section class="view hidden" id="view-notes">
-      <div class="privacy-banner"><svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>운영 메모는 나만 볼 수 있어요. 함께 알아야 할 건 공지에 써 주세요.</div>
-      <div id="notes-list"></div>
-    </section>
-
     <section class="view hidden" id="view-docs">
       <input class="search" id="doc-search" type="search" placeholder="제목, 내용 검색">
       <div class="filters" id="doc-cats"></div>
@@ -998,7 +992,6 @@ body {
       <div class="nav-group desk-only">자료</div>
       <button type="button" class="desk-only sub" data-view="docs"><span data-ic="folder"></span>자료</button>
       <button type="button" class="desk-only sub" data-view="notices"><span data-ic="mailbox"></span>공지</button>
-      <button type="button" class="desk-only sub" data-view="notes"><span data-ic="memo"></span>운영 메모</button>
       <div class="nav-brand desk-only"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8"/><path d="M12 13c0-4 3-6.5 7-6.5 0 4-3 6.5-7 6.5z"/><path d="M12 15c0-3-2.3-5-5.5-5 0 3 2.3 5 5.5 5z"/></svg>two-clocks-home</div>
     </div>
   </nav>
@@ -1151,7 +1144,6 @@ body {
   <form class="sheet" id="memo-form" method="dialog">
     <h3 id="memo-dialog-title"></h3>
     <div class="form">
-      <label class="full" id="m-section-wrap">구분<input id="m-section" list="dl-sections" autocomplete="off" placeholder="예: 목표, 계좌, 이사"></label>
       <label class="full">제목<input id="m-title" required autocomplete="off"></label>
       <label class="full">내용<textarea id="m-body" style="min-height:140px"></textarea></label>
       <div class="checks" id="m-pin-wrap"><label class="toggle"><input id="m-pinned" type="checkbox"><span>홈에 고정</span></label></div>
@@ -1258,7 +1250,6 @@ body {
 </dialog>
 
 <datalist id="dl-doc-cats"></datalist>
-<datalist id="dl-sections"></datalist>
 <datalist id="dl-pay"></datalist>
 <datalist id="dl-cat"></datalist>
 <datalist id="dl-sub"></datalist>
@@ -1369,9 +1360,8 @@ const state = {
   eventOwner: null,
   choreAssignee: null,
   privateNotes: new Map(),
-  notes: [],
   notices: [],
-  editingMemo: null,
+  editingNotice: null,
   docs: [],
   docFiles: [],
   docFilter: { q: '', cat: '' },
@@ -1810,22 +1800,6 @@ function renderDebt() {
   }).join('');
 }
 
-async function renderNotes() {
-  const { data, error } = await sb.from('notes').select('*').order('id');
-  if (error) return fail(error);
-  state.notes = data;
-  const sections = new Map();
-  for (const n of data) {
-    if (!sections.has(n.section)) sections.set(n.section, []);
-    sections.get(n.section).push(n);
-  }
-  fillDatalist('#dl-sections', [...sections.keys()]);
-  $('#notes-list').innerHTML = [...sections].map(([s, list]) => `
-    <div class="block"><div class="block-head"><h2>${esc(s)}</h2></div>
-      ${list.map(n => `<div class="note"><div class="item"><span>${esc(n.item)}</span><button class="edit" type="button" data-note="${n.id}">고치기</button></div><div class="content">${esc(n.content)}</div></div>`).join('')}
-    </div>`).join('') || '<div class="block empty">운영 메모가 없어요</div>';
-}
-
 // 나만 보는 메모 -------------------------------------------------------
 
 function privateNote(type, id) {
@@ -1850,8 +1824,6 @@ async function savePrivate(type, id, text) {
   if (body) state.privateNotes.set(`${type}:${id}`, body);
   else state.privateNotes.delete(`${type}:${id}`);
 }
-
-// 공지 ---------------------------------------------------------------
 
 // 받은 메모 -----------------------------------------------------------
 // 분류 없이 남긴 메모. 새별이 Claude와 가계부·자료로 정리하고 지운다
@@ -1909,6 +1881,8 @@ $('#inbox-list').addEventListener('click', async e => {
   loadInbox();
 });
 
+// 공지 ---------------------------------------------------------------
+
 async function loadNotices() {
   const { data, error } = await sb.from('notices').select('*').order('pinned', { ascending: false }).order('updated_at', { ascending: false });
   if (error) return fail(error);
@@ -1922,16 +1896,11 @@ async function loadNotices() {
   renderToday();
 }
 
-function openMemo(kind, item) {
-  state.editingMemo = { kind, item: item || null };
-  const isNote = kind === 'note';
-  $('#memo-dialog-title').textContent = (item ? '고치기 · ' : '') + (isNote ? '운영 메모 (나만 보기)' : '공지 (함께 보기)');
-  $('#m-section-wrap').classList.toggle('hidden', !isNote);
-  $('#m-pin-wrap').classList.toggle('hidden', isNote);
-  $('#m-section').required = isNote;
-  $('#m-section').value = isNote ? (item?.section || '') : '';
-  $('#m-title').value = (isNote ? item?.item : item?.title) || '';
-  $('#m-body').value = (isNote ? item?.content : item?.body) || '';
+function openNotice(item) {
+  state.editingNotice = item || null;
+  $('#memo-dialog-title').textContent = (item ? '고치기 · ' : '') + '공지 (함께 보기)';
+  $('#m-title').value = item?.title || '';
+  $('#m-body').value = item?.body || '';
   $('#m-pinned').checked = !!item?.pinned;
   $('#memo-delete').classList.toggle('hidden', !item);
   $('#memo-dialog').showModal();
@@ -1939,50 +1908,40 @@ function openMemo(kind, item) {
 $('#memo-cancel').addEventListener('click', () => $('#memo-dialog').close());
 $('#memo-form').addEventListener('submit', async e => {
   e.preventDefault();
-  const { kind, item } = state.editingMemo;
-  const title = $('#m-title').value.trim(), body = $('#m-body').value.trim();
-  const now = new Date().toISOString();
-  let res;
-  if (kind === 'note') {
-    const row = { section: $('#m-section').value.trim(), item: title, content: body || title, updated_on: today() };
-    res = item ? await sb.from('notes').update(row).eq('id', item.id) : await sb.from('notes').insert(row);
-  } else {
-    const row = { title, body: body || null, pinned: $('#m-pinned').checked, updated_at: now };
-    res = item ? await sb.from('notices').update(row).eq('id', item.id) : await sb.from('notices').insert(row);
-  }
+  const item = state.editingNotice;
+  const row = { title: $('#m-title').value.trim(), body: $('#m-body').value.trim() || null, pinned: $('#m-pinned').checked, updated_at: new Date().toISOString() };
+  const res = item ? await sb.from('notices').update(row).eq('id', item.id) : await sb.from('notices').insert(row);
   if (res.error) return fail(res.error);
   $('#memo-dialog').close();
   toast('저장했어요');
-  kind === 'note' ? renderNotes() : loadNotices();
+  loadNotices();
 });
 $('#memo-delete').addEventListener('click', async () => {
-  const { kind, item } = state.editingMemo;
+  const item = state.editingNotice;
   if (!item || !confirm('지울까요?')) return;
-  const { error } = await sb.from(kind === 'note' ? 'notes' : 'notices').delete().eq('id', item.id);
+  const { error } = await sb.from('notices').delete().eq('id', item.id);
   if (error) return fail(error);
   $('#memo-dialog').close();
   toast('지웠어요');
-  kind === 'note' ? renderNotes() : loadNotices();
+  loadNotices();
 });
 document.addEventListener('click', e => {
-  const noteId = e.target.closest('[data-note]')?.dataset.note;
-  if (noteId) openMemo('note', state.notes.find(n => String(n.id) === noteId));
   const noticeId = e.target.closest('[data-notice]')?.dataset.notice;
-  if (noticeId) openMemo('notice', state.notices.find(n => String(n.id) === noticeId));
+  if (noticeId) openNotice(state.notices.find(n => String(n.id) === noticeId));
 });
 
 // 이동 ---------------------------------------------------------------
 
-const VIEW_TITLES = { debt: '부채', notes: '운영 메모', notices: '공지', docs: '자료', recurring: '정기 지출', chores: '집안일', mine: '내 할 일' };
+const VIEW_TITLES = { debt: '부채', notices: '공지', docs: '자료', recurring: '정기 지출', chores: '집안일', mine: '내 할 일' };
 // 큰 묶음 셋. 아래 탭은 묶음 단위, 묶음 안은 화면 위 작은 탭(#subtabs)으로 바꾼다
 const GROUPS = {
   ledger: [['tx', '내역'], ['budget', '예산'], ['debt', '부채'], ['recurring', '정기 지출']],
   plan: [['schedule', '달력'], ['chores', '집안일'], ['mine', '내 할 일']],
-  library: [['docs', '자료'], ['notices', '공지'], ['notes', '운영 메모']],
+  library: [['docs', '자료'], ['notices', '공지']],
 };
 const GROUP_OF = Object.fromEntries(Object.entries(GROUPS).flatMap(([g, views]) => views.map(([v]) => [v, g])));
 const lastInGroup = {};
-const FAB_LABEL = { home: '기록하기', tx: '기록하기', schedule: '일정 추가', chores: '집안일 추가', mine: '할 일 추가', notes: '메모 추가', notices: '공지 쓰기', docs: '자료 추가', recurring: '정기 지출 추가' };
+const FAB_LABEL = { home: '기록하기', tx: '기록하기', schedule: '일정 추가', chores: '집안일 추가', mine: '할 일 추가', notices: '공지 쓰기', docs: '자료 추가', recurring: '정기 지출 추가' };
 
 function go(view) {
   state.view = view;
@@ -2003,7 +1962,6 @@ function go(view) {
   $('#month-picker').classList.toggle('hidden', !!fixedTitle);
   $('#view-title').classList.toggle('hidden', !fixedTitle);
   $('#view-title').textContent = fixedTitle || '';
-  if (view === 'notes') renderNotes();
   if (view === 'debt') renderPlan();
   if (view === 'home') renderFlow();
   window.scrollTo(0, 0);
@@ -2114,8 +2072,7 @@ function openTx(t) {
 
 $('#add-tx').addEventListener('click', () => {
   if (state.view === 'schedule') openEvent(null);
-  else if (state.view === 'notes') openMemo('note', null);
-  else if (state.view === 'notices') openMemo('notice', null);
+  else if (state.view === 'notices') openNotice(null);
   else if (state.view === 'docs') openDoc(null);
   else if (state.view === 'recurring') openRec(null);
   else if (state.view === 'chores') openChore(null);
@@ -3543,8 +3500,7 @@ async function flushRefresh() {
   pending = { month: false, chores: false, statics: false };
   if (job.statics) await loadStatic();
   if (job.private) { await loadPrivate(); job.month = job.chores = true; }
-  await Promise.all([job.month && loadMonth(), job.chores && loadChores(), job.notices && loadNotices(), job.docs && loadDocs(), job.inbox && loadInbox(), job.mine && loadMine(),
-    state.view === 'notes' && renderNotes()]);
+  await Promise.all([job.month && loadMonth(), job.chores && loadChores(), job.notices && loadNotices(), job.docs && loadDocs(), job.inbox && loadInbox(), job.mine && loadMine()]);
 }
 
 function watchChanges() {
