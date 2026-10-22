@@ -432,6 +432,12 @@ dialog::backdrop { background: var(--scrim); }
 .sub-add { display: flex; gap: 8px; margin-top: 8px; }
 .sub-add input { flex: 1; min-width: 0; }
 .sub-add .btn { min-width: 0; padding: 10px 14px; }
+.quick-add { display: flex; gap: 8px; margin: 2px 0 8px; }
+.quick-add input, .quick-add select { min-width: 0; padding: 11px 14px; border: 0; border-radius: 12px; background: var(--fill); font-size: 15px; color: var(--text); }
+.quick-add input { flex: 1; }
+.quick-add select { flex: 0 0 auto; padding-right: 8px; color: var(--text-2); }
+.quick-add input:focus, .quick-add select:focus { outline: 2px solid var(--accent); }
+.quick-add .btn { min-width: 0; padding: 10px 14px; }
 .mine-note { text-align: center; font-size: 13px; color: var(--muted); margin: 4px 0 24px; }
 .weekdays { display: flex; gap: 6px; margin-top: 6px; }
 .weekdays button { flex: 1; border: 0; padding: 10px 0; border-radius: 10px; background: var(--fill); color: var(--muted); font-weight: 600; }
@@ -947,10 +953,12 @@ body {
       </div>
       <div class="block">
         <div class="block-head"><h2>할 일</h2><span class="aside num" id="mine-todo-count"></span></div>
+        <form class="quick-add" data-qa="todo"><input autocomplete="off" required maxlength="200" placeholder="할 일 적고 엔터"><button class="btn" type="submit">추가</button></form>
         <div id="mine-todos"></div>
       </div>
       <div class="block">
         <div class="block-head"><h2>내 루틴</h2><span class="aside">연속 기록</span></div>
+        <form class="quick-add" data-qa="routine"><input autocomplete="off" required maxlength="200" placeholder="루틴 적고 엔터 (매일)"><button class="btn" type="submit">추가</button></form>
         <div id="mine-routines"></div>
       </div>
       <div class="block">
@@ -967,6 +975,7 @@ body {
       </div>
       <div class="block">
         <div class="block-head"><h2>오늘까지</h2><span class="aside num" id="chores-due-count"></span></div>
+        <form class="quick-add" data-qa="chore"><input autocomplete="off" required maxlength="200" placeholder="집안일 적고 엔터"><select aria-label="얼마나 자주"><option value="">한 번만</option><option value="1">매일</option><option value="3">3일마다</option><option value="7">매주</option><option value="14">2주마다</option><option value="30">한 달마다</option></select><button class="btn" type="submit">추가</button></form>
         <div id="chores-due"></div>
       </div>
       <div class="block">
@@ -2591,7 +2600,7 @@ function renderChores() {
   $('#chores-due-count').textContent = due.length ? `${due.length}개` : '';
   $('#chores-due').innerHTML = due.map(choreRow).join('') ||
     (state.chores.length ? '<div class="empty">오늘 할 일을 다 했어요</div>'
-      : '<div class="placeholder"><b>아직 등록한 집안일이 없어요</b>아래 ‘집안일 추가’로 분리수거, 청소 같은 일을 넣어 보세요</div>');
+      : '<div class="placeholder"><b>아직 등록한 집안일이 없어요</b>위 칸에 분리수거, 청소 같은 일을 적어 보세요</div>');
   $('#chores-soon').innerHTML = soon.map(choreRow).join('') || '<div class="empty">예정된 일이 없어요</div>';
   $('#chore-logs').innerHTML = state.choreLogs.map(l => {
     const p = person(l.done_by);
@@ -2697,7 +2706,7 @@ function renderMine() {
   const doneToday = todayList.filter(r => state.routineDone.has(doneKey(r.id, t))).length;
   $('#mine-routine-count').textContent = todayList.length ? `${doneToday}/${todayList.length}` : '';
   $('#mine-today').innerHTML = todayList.map(r => routineRow(r, true)).join('') ||
-    `<div class="empty">${routines.length ? '오늘은 하는 루틴이 없어요' : '아래 ‘할 일 추가’에서 반복 루틴을 만들어 보세요'}</div>`;
+    `<div class="empty">${routines.length ? '오늘은 하는 루틴이 없어요' : '아래 ‘내 루틴’ 칸에 적어 보세요'}</div>`;
   const open = (state.todos || []).filter(x => !x.done_on && !x.parent_id)
     .sort((a, b) => (a.due_on || '9999').localeCompare(b.due_on || '9999') || a.created_at.localeCompare(b.created_at));
   $('#mine-todo-count').textContent = open.length ? `${open.length}개` : '';
@@ -2821,6 +2830,27 @@ $('#t-subs').addEventListener('click', async e => {
   renderTodoSubs();
 });
 $('#t-kind').addEventListener('click', e => { if (e.target.dataset.v) setTodoKind(e.target.dataset.v); });
+
+// 빠른 추가: 목록 위 칸에 적고 엔터. 기한·요일·담당 같은 자세한 건 항목을 눌러 고친다
+document.addEventListener('submit', async e => {
+  const form = e.target.closest('.quick-add');
+  if (!form) return;
+  e.preventDefault();
+  const input = form.querySelector('input');
+  const title = input.value.trim();
+  if (!title) return;
+  const kind = form.dataset.qa;
+  const btn = form.querySelector('button');
+  btn.disabled = true;
+  const { error } = kind === 'todo' ? await sb.from('todos').insert({ title })
+    : kind === 'routine' ? await sb.from('routines').insert({ title })
+    : await sb.from('chores').insert({ title, due_on: today(), repeat_days: Number(form.querySelector('select').value) || null });
+  btn.disabled = false;
+  if (error) return fail(error);
+  input.value = '';
+  input.focus();
+  kind === 'chore' ? loadChores() : loadMine();
+});
 $('#t-days').addEventListener('click', e => {
   const d = Number(e.target.dataset.d);
   if (!d) return;
