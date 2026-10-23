@@ -1336,7 +1336,7 @@ body {
     <div class="form">
       <label class="full">이름<input id="p-name" required autocomplete="off" maxlength="200" placeholder="예: 청소기"></label>
       <label>분류<select id="p-cat"><option>가구</option><option>가전</option><option>비품</option><option>생필품</option><option>위시</option></select></label>
-      <label>순위<select id="p-pri"><option value="0">0순위</option><option value="1">1순위</option><option value="2">2순위</option><option value="3">3순위</option><option value="4">4순위</option></select></label>
+      <label>언제 필요<select id="p-pri"><option value="0">이사 날까지</option><option value="1">이사 첫 주</option><option value="2">11월 안</option><option value="3">12월 이후</option><option value="4">여유 생기면</option></select></label>
       <label>누가 사나<select id="p-buyer"><option>같이</option><option>새별</option><option>연표</option><option>선물</option></select></label>
       <label id="p-gift-wrap">누가 주나<input id="p-gift" autocomplete="off" placeholder="예: 부모님"></label>
       <label>상태<select id="p-status"><option>살 것</option><option>고민 중</option><option>샀음</option></select></label>
@@ -3509,6 +3509,8 @@ $('#rec-delete').addEventListener('click', async () => {
 
 const PUR_IC = { '가구': 'house', '가전': 'radio', '비품': 'clip', '생필품': 'sprout', '위시': 'star' };
 const PUR_FILTERS = [['left', '남은 것'], ['gift', '선물'], ['done', '샀음'], ['all', '전부']];
+// priority 0~4는 순위가 아니라 '언제 필요한가'로 쓴다
+const PUR_WHEN = ['이사 날까지', '이사 첫 주', '11월 안', '12월 이후', '여유 생기면'];
 
 async function loadPurchases() {
   const { data, error } = await sb.from('purchases').select('*').order('priority').order('id');
@@ -3537,7 +3539,7 @@ function renderPurchases() {
   const groups = [0, 1, 2, 3, 4].map(n => [n, list.filter(p => p.priority === n)]).filter(([, ps]) => ps.length);
   $('#pur-list').innerHTML = groups.map(([n, ps]) => {
     const sum = ps.filter(p => p.buyer !== '선물' && p.status !== '샀음').reduce((a, p) => a + Number(p.est_amount || 0), 0);
-    return `<div class="block"><div class="block-head"><h2>${n}순위</h2><span class="aside num">${sum ? won(sum) : ''}</span></div>${ps.map(purRow).join('')}</div>`;
+    return `<div class="block"><div class="block-head"><h2>${PUR_WHEN[n]}</h2><span class="aside num">${sum ? won(sum) : ''}</span></div>${ps.map(purRow).join('')}</div>`;
   }).join('') || '<div class="block"><div class="empty">여기엔 아직 없어요</div></div>';
 }
 
